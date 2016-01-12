@@ -1,0 +1,1 @@
+c:\users\adam\documents\visual studio 2015\Projects\Euler\Euler\bin\Debug\Euler.exe.config

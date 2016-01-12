@@ -1,0 +1,7 @@
+*.obj
+*.exe
+*.dll
+bin/*
+obj/*
+*.suo
+
