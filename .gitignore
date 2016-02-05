@@ -1,8 +1,8 @@
 *.obj
 *.exe
 *.dll
-bin/*
-obj/*
+*/bin/*
+*/obj/*
 *.suo
 *.pdb
 
