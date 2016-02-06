@@ -4,45 +4,37 @@ using System.Text;
 
 namespace Euler
 {
-    public struct Sudoku : IEqualityComparer<Sudoku>, IEquatable<Sudoku>, ICloneable
+    public class Sudoku : IEqualityComparer<Sudoku>, IEquatable<Sudoku>, ICloneable
     {
         public int EulerValue
         {
             get
             {
-                return _board[0, 0] + _board[1, 0] + _board[2, 0];
+                if (_board[0, 0] == 0 || _board[1, 0] == 0 || _board[2, 0] == 0)
+                {
+                    return -1;
+                }
+                return _board[0, 0] * 100 + _board[1, 0] * 10 + _board[2, 0];
             }
         }
-
-        private static readonly HashSet<Sudoku> cache = new HashSet<Sudoku>();
 
         public bool IsSolved
         {
             get
             {
-                if (!cache.Add(this))
+                foreach (var i in _board)
                 {
-                    return false;
-                }
-
-                for (int x = 0; x < 9; x++)
-                {
-                    for (int y = 0; y < 9; y++)
+                    if (i == 0)
                     {
-                        if (_board[x, y] == 0)
-                        {
-                            return false;
-                        }
+                        return false;
                     }
                 }
-
-                cache.Remove(this);
 
                 return true;
             }
         }
 
-        public bool Set(int x, int y, int value)
+        public bool TrySet(int x, int y, int value)
         {
             if (_board[x, y] == 0 && Test(x, y, value))
             {
@@ -57,16 +49,16 @@ namespace Euler
         {
             get
             {
-                for (int x = 0; x < 9; x++)
+                for (int y = 0; y < 9; y++)
                 {
-                    for (int y = 0; y < 9; y++)
+                    for (int x = 0; x < 9; x++)
                     {
                         if (_board[x, y] == 0)
                         {
                             for (int i = 1; i <= 9; i++)
                             {
                                 var s = new Sudoku(this);
-                                if (s.Set(x, y, i))
+                                if (s.TrySet(x, y, i))
                                 {
                                     yield return s;
                                 }
@@ -103,6 +95,7 @@ namespace Euler
 
             return true;
         }
+
         public int Sum
         {
             get
@@ -119,7 +112,8 @@ namespace Euler
                 return sum;
             }
         }
-        private readonly int[,] _board;
+
+        private readonly int[,] _board = new int[9, 9];
 
         public Sudoku(IList<string> lines)
         {
@@ -127,7 +121,6 @@ namespace Euler
             {
                 throw new ArgumentException();
             }
-            _board = new int[9, 9];
             for (int x = 0; x < 9; x++)
             {
                 for (int y = 0; y < 9; y++)
@@ -139,7 +132,17 @@ namespace Euler
 
         public Sudoku(Sudoku sudoku)
         {
-            _board = (int[,])sudoku._board.Clone();
+            for (int i = 0; i < 9; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    _board[i, j] = sudoku._board[i, j];
+                }
+            }
+        }
+
+        public Sudoku()
+        {
         }
 
         public bool Equals(Sudoku x, Sudoku y)

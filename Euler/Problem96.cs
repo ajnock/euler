@@ -51,7 +51,7 @@ namespace Euler
 
                 return true;
             }
-
+            
             foreach (var next in sudoku.Neighbors)
             {
                 depth++;
@@ -78,18 +78,51 @@ namespace Euler
         int maxDepth = 0;
         public override object Solve()
         {
-            var solutions = new List<Sudoku>();
-
-            foreach (var sudoku in GetBoards())
+            List<Sudoku> solutions = new List<Sudoku>();
+            IEnumerable<Sudoku> boards = GetBoards();
+            foreach (var board in boards)
             {
-                depth = 0;
-                Sudoku solution;
-                if (Solve(sudoku, out solution))
+                Sudoku s;
+                if (Solve(board, out s))
                 {
-                    solutions.Add(solution);
+                    solutions.Add(s);
+                }
+                else
+                {
+                    throw new Exception("Unsolvable");
                 }
             }
-            return string.Join("\r\n", solutions);
+
+            return solutions.Sum(s => s.EulerValue);
+        }
+
+        private Sudoku Solve(Sudoku sudoku)
+        {
+            depth = 0;
+
+            for (int i = 1; i <= 9; i++)
+            {
+                for (int j = 1; j <= 9; j++)
+                {
+                    for (int k = 1; k <= 9; k++)
+                    {
+                        var s = new Sudoku(sudoku);
+                        if (s.TrySet(0, 0, i) && s.TrySet(1, 0, j) && s.TrySet(2, 0, k))
+                        {
+                            Console.WriteLine(s.EulerValue);
+
+                            Sudoku solution;
+                            if (Solve(s, out solution))
+                            {
+                                return solution;
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            return null;
         }
     }
 }
