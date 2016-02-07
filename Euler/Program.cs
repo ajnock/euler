@@ -10,10 +10,12 @@ namespace Euler
     {
         static void Main(string[] args)
         {
-            Problem problem = new Problem96();
+            Problem problem = new Problem41();
 
             object solution = problem.Solve();
 
+            Console.WriteLine();
+            Console.WriteLine("=========================================");
             Console.WriteLine(solution);
             Console.ReadLine();
         }

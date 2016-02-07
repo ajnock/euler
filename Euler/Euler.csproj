@@ -45,7 +45,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Eratosthenes.cs" />
+    <Compile Include="Euler.cs" />
     <Compile Include="Problem.cs" />
+    <Compile Include="Problem41.cs" />
     <Compile Include="Problem96.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
