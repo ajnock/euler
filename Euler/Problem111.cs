@@ -32,13 +32,12 @@ namespace Euler
                 "7777777777",
                 "8888888888",
                 "9999999999"
-            }.SelectMany(s => Permute(s)).SelectMany(s => Permute(s)).SelectMany(s => Permute(s));
+            };
 
             Parallel.ForEach(seeds, seed =>
             {
-                FindPrime(seed, dictionary);
-                //var list = new[] { seed };
-                //FindPrimes(list.SelectMany(s => Permute(s)).SelectMany(s => Permute(s)).SelectMany(s => Permute(s)), dictionary);
+                var list = new[] { seed };
+                FindPrimes(list.SelectMany(s => Permute(s)).SelectMany(s => Permute(s)).SelectMany(s => Permute(s)), dictionary);
             });
 
             long sum = 0;
@@ -56,36 +55,6 @@ namespace Euler
             return sum;
         }
         
-        private static void FindPrime(string permutation, IDictionary<string, List<string>> dictionary)
-        {
-            long i = long.Parse(permutation);
-            if (i % 2 == 0 || i % 3 == 0)
-            {
-                return;
-            }
-            var duplicates = digits.Where(c => permutation.Count(s => s.ToString() == c) > 1).ToList();
-
-            if (duplicates.Count == 1)
-            {
-                var d = duplicates.FirstOrDefault();
-                var list = dictionary[d];
-                int max = list.Any() ? list.Last().Count(s => s.ToString() == d) : 0;
-                if (permutation.Count(s => s.ToString() == d) >= max)
-                {
-                    bool prime = i % 2 != 0;
-                    for (long p = 3; p < i / 3 && prime; p += 2)
-                    {
-                        prime &= i % p != 0;
-                    }
-                    if (prime)
-                    {
-                        list.Add(permutation);
-                        Console.WriteLine(i);
-                    }
-                }
-            }
-        }
-
         private static void FindPrimes(IEnumerable<string> seeds, IDictionary<string, List<string>> dictionary)
         {
             var nodes = new HashSet<string>();
