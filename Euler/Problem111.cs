@@ -10,12 +10,12 @@ namespace Euler
 {
     class Problem111 : Problem
     {
-        private static string[] digits = new[]{
-            "0","1","2","3","4","5","6","7","8","9"
+        private static char[] digits = new[]{
+            '0','1','2','3','4','5','6','7','8','9'
         };
         public override object Solve()
         {
-            IDictionary<string, List<string>> dictionary = new ConcurrentDictionary<string, List<string>>();
+            IDictionary<char, List<string>> dictionary = new ConcurrentDictionary<char, List<string>>();
             foreach (var key in digits)
             {
                 dictionary.Add(key, new List<string>());
@@ -37,14 +37,28 @@ namespace Euler
             Parallel.ForEach(seeds, seed =>
             {
                 var list = new[] { seed };
-                FindPrimes(list.SelectMany(s => Permute(s)).SelectMany(s => Permute(s)).SelectMany(s => Permute(s)), dictionary);
+                IEnumerable<string> permutations;
+                switch (seed[0])
+                {
+                    case '0':
+                    case '2':
+                    case '8':
+                        permutations = list.SelectMany(s => Permute(s)).SelectMany(s => Permute(s));
+                        break;
+                    default:
+                        permutations = list.SelectMany(s => Permute(s));
+                        break;
+                }
+                //permutations = list.SelectMany(s => Permute(s)).SelectMany(s => Permute(s)).SelectMany(s => Permute(s));
+                var hash = new HashSet<string>(permutations);
+                FindPrimes(hash, dictionary);
             });
 
             long sum = 0;
-            foreach (var kvp in dictionary)
+            foreach (var kvp in dictionary.OrderBy(kvp => kvp.Key))
             {
-                int m = kvp.Value.Last().Count(c => c.ToString() == kvp.Key);
-                var primes = new HashSet<string>(kvp.Value.Where(l => l.Count(c => c.ToString() == kvp.Key) == m));
+                int m = kvp.Value.Select(p => p.Count(c => c == kvp.Key)).Max();
+                var primes = new HashSet<string>(kvp.Value.Where(l => l.Count(c => c == kvp.Key) == m));
                 int n = primes.Count;
                 var s = primes.Sum(p => long.Parse(p));
 
@@ -54,10 +68,9 @@ namespace Euler
 
             return sum;
         }
-        
-        private static void FindPrimes(IEnumerable<string> seeds, IDictionary<string, List<string>> dictionary)
+
+        private static void FindPrimes(IEnumerable<string> seeds, IDictionary<char, List<string>> dictionary)
         {
-            var nodes = new HashSet<string>();
             foreach (string permutation in seeds)
             {
                 long i = long.Parse(permutation);
@@ -65,25 +78,32 @@ namespace Euler
                 {
                     continue;
                 }
-                var duplicates = digits.Where(c => permutation.Count(s => s.ToString() == c) > 1).ToList();
+                var duplicates = digits.Where(c => permutation.Count(s => s == c) > 1).ToList();
 
                 if (duplicates.Count == 1)
                 {
                     var d = duplicates.FirstOrDefault();
                     var list = dictionary[d];
-                    int max = list.Any() ? list.Last().Count(s => s.ToString() == d) : 0;
-                    if (permutation.Count(s => s.ToString() == d) >= max)
+                    int max = list.Any() ? list.Max(s => s.Count(c => c == d)) : 0;
+                    if (permutation.Count(s => s == d) >= max)
                     {
-                        //bool prime = primes.All(p => i % p != 0);
-                        bool prime = i % 2 != 0 && nodes.Add(permutation);
-                        for (long p = 3; p < i / 3 && prime; p += 2)
+                        if (i % 2 != 0)
                         {
-                            prime &= i % p != 0;
-                        }
-                        if (prime)
-                        {
-                            list.Add(permutation);
-                            Console.WriteLine(i);
+                            bool prime = true;
+                            Parallel.For(1, i / 6, (p, loop) =>
+                            {
+                                var modulos = p * 2 + 1;
+                                if (i % modulos == 0)
+                                {
+                                    prime = false;
+                                    loop.Stop();
+                                }
+                            });
+                            if (prime)
+                            {
+                                list.Add(permutation);
+                                Console.WriteLine(permutation);
+                            }
                         }
                     }
                 }
