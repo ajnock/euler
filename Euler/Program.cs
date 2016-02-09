@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace Euler
 {
@@ -10,12 +7,15 @@ namespace Euler
     {
         static void Main(string[] args)
         {
-            Problem problem = new Problem41();
+            Problem problem = new Problem111();
 
+            var timer = new Stopwatch();
+            timer.Start();
             object solution = problem.Solve();
+            timer.Stop();
 
             Console.WriteLine();
-            Console.WriteLine("=========================================");
+            Console.WriteLine("========================================= " + timer.Elapsed.TotalSeconds + "s");
             Console.WriteLine(solution);
             Console.ReadLine();
         }

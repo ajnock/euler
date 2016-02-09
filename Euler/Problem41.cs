@@ -17,19 +17,18 @@ namespace Euler
         public override object Solve()
         {
             var seive = new Eratosthenes();
-            var primes = seive.Seive(10000000000);
-            long solution = 0;
+            int max = 7654321;
+            var primes = seive.Seive(max / 3).ToList(); ;
 
-            foreach (var p in primes)
+            for (int i = max; i > 0; i -= 2)
             {
-                if (Euler.IsPandigitial(p))
+                if (Euler.IsPandigitial(i) && !primes.Any(p => i % p == 0))
                 {
-                    solution = p;
-                    Console.WriteLine(p);
+                    return i;
                 }
             }
 
-            return solution;
+            return null;
         }
     }
 }

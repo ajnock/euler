@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,18 @@ namespace Euler
     /// </summary>
     public class Eratosthenes
     {
-        private readonly List<long> _primes = new List<long>();
+        private readonly ConcurrentQueue<long> _primes = new ConcurrentQueue<long>();
+
+        public IEnumerable<long> GetPrimes(long max)
+        {
+            yield return 2;
+
+            var enumerator = _primes.GetEnumerator();
+            while (enumerator.MoveNext() && enumerator.Current <= max)
+            {
+                yield return enumerator.Current;
+            }
+        }
 
         private bool IsPrime(long i)
         {
@@ -22,7 +34,7 @@ namespace Euler
 
             foreach (var p in _primes)
             {
-                if (p > i / 2)
+                if (p > i / 3)
                 {
                     return true;
                 }
@@ -49,8 +61,8 @@ namespace Euler
             {
                 if (IsPrime(i))
                 {
-                    //Console.WriteLine(i);
-                    _primes.Add(i);
+                    Console.WriteLine(i + "/" + max);
+                    _primes.Enqueue(i);
                     yield return i;
                 }
                 i += 2;
