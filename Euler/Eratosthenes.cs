@@ -12,17 +12,10 @@ namespace Euler
     /// </summary>
     public class Eratosthenes
     {
-        private readonly ConcurrentQueue<long> _primes = new ConcurrentQueue<long>();
-
-        public IEnumerable<long> GetPrimes(long max)
+        private readonly ConcurrentQueue<long> _primes;
+        public Eratosthenes()
         {
-            yield return 2;
-
-            var enumerator = _primes.GetEnumerator();
-            while (enumerator.MoveNext() && enumerator.Current <= max)
-            {
-                yield return enumerator.Current;
-            }
+            _primes = new ConcurrentQueue<long>();
         }
 
         private bool IsPrime(long i)
@@ -31,20 +24,23 @@ namespace Euler
             {
                 return false;
             }
-
-            foreach (var p in _primes)
+            long half = i / 2;
+            bool testIsConclusive = false;
+            bool isComposite = false;
+            while (!testIsConclusive && !isComposite)
             {
-                if (p > i / 3)
+                Parallel.ForEach(_primes, (p, loopState) =>
                 {
-                    return true;
-                }
-                else if (i % p == 0)
-                {
-                    return false;
-                }
+                    testIsConclusive |= p > half;
+                    isComposite |= i % p == 0;
+                    if (isComposite)
+                    {
+                        loopState.Stop();
+                    }
+                });
             }
 
-            return true;
+            return testIsConclusive && !isComposite;
         }
 
         /// <summary>
@@ -57,11 +53,12 @@ namespace Euler
             yield return 2;
 
             long i = 3;
+            _primes.Enqueue(3);
             while (i <= max)
             {
                 if (IsPrime(i))
                 {
-                    Console.WriteLine(i + "/" + max);
+                    //Console.WriteLine(i);
                     _primes.Enqueue(i);
                     yield return i;
                 }
