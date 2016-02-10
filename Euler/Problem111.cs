@@ -15,11 +15,12 @@ namespace Euler
         };
         public override object Solve()
         {
-            IDictionary<char, List<string>> dictionary = new ConcurrentDictionary<char, List<string>>();
+            IDictionary<char, ConcurrentQueue<string>> dictionary = new ConcurrentDictionary<char, ConcurrentQueue<string>>();
             foreach (var key in digits)
             {
-                dictionary.Add(key, new List<string>());
+                dictionary.Add(key, new ConcurrentQueue<string>());
             }
+
 
             IEnumerable<string> seeds = new[] {
                 "0000000000",
@@ -69,7 +70,7 @@ namespace Euler
             return sum;
         }
 
-        private static void FindPrimes(IEnumerable<string> seeds, IDictionary<char, List<string>> dictionary)
+        private static void FindPrimes(IEnumerable<string> seeds, IDictionary<char, ConcurrentQueue<string>> dictionary)
         {
             foreach (string permutation in seeds)
             {
@@ -89,19 +90,25 @@ namespace Euler
                     {
                         if (i % 2 != 0)
                         {
+                            object obj = new object();
                             bool prime = true;
-                            Parallel.For(1, i / 6, (p, loop) =>
+                            double m = Math.Sqrt(i) / 2;
+                            Parallel.For(1L, (long)m, (p, loop) =>
                             {
                                 var modulos = p * 2 + 1;
                                 if (i % modulos == 0)
                                 {
-                                    prime = false;
-                                    loop.Stop();
+                                    lock (obj)
+                                    {
+                                        prime &= false;
+                                        loop.Stop();
+                                    }
                                 }
                             });
+
                             if (prime)
                             {
-                                list.Add(permutation);
+                                list.Enqueue(permutation);
                                 Console.WriteLine(permutation);
                             }
                         }
