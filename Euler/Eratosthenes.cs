@@ -24,19 +24,35 @@ namespace Euler
             {
                 return false;
             }
-            long half = i / 2;
+            long half = (long)Math.Sqrt(i);
+            object obj1 = new object();
+            object obj2 = new object();
             bool testIsConclusive = false;
             bool isComposite = false;
             while (!testIsConclusive && !isComposite)
             {
                 Parallel.ForEach(_primes, (p, loopState) =>
                 {
-                    testIsConclusive |= p > half;
-                    isComposite |= i % p == 0;
-                    if (isComposite)
+                    bool com = i % p == 0;
+                    if (com)
                     {
-                        loopState.Stop();
+                        lock(obj1)
+                        {
+                            isComposite |= com;
+                            loopState.Stop();
+                        }
                     }
+
+                    Task.Run(() => {
+                        bool con = p > half;
+                        if (con)
+                        {
+                            lock (obj2)
+                            {
+                                testIsConclusive |= con;
+                            }
+                        }
+                    });
                 });
             }
 
