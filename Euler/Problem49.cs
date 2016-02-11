@@ -33,7 +33,7 @@ namespace Euler
 
                 if (hash == "1478")
                 {
-                    Console.WriteLine(string.Join("", set));
+                    Console.WriteLine(hash + " => " + string.Join("", set));
                 }
                 else if (set.Count >= 3)
                 {
@@ -45,7 +45,7 @@ namespace Euler
                             {
                                 if (set[k] - set[j] == set[j] - set[i])
                                 {
-                                    return string.Concat(set[i], set[j], set[k]);
+                                    return hash + " => " + string.Concat(set[i], set[j], set[k]);
                                 }
                             }
                         }
