@@ -13,12 +13,13 @@ namespace Euler
     public class Eratosthenes
     {
         private readonly ConcurrentQueue<long> _primes;
+
         public Eratosthenes()
         {
             _primes = new ConcurrentQueue<long>();
         }
 
-        private bool IsPrime(long i)
+        public bool IsPrime(long i)
         {
             if (i % 2 == 0)
             {
@@ -27,36 +28,41 @@ namespace Euler
             long half = (long)Math.Sqrt(i);
             object obj1 = new object();
             object obj2 = new object();
-            bool testIsConclusive = false;
+            long maxTested = 0;
             bool isComposite = false;
-            while (!testIsConclusive && !isComposite)
+            while (maxTested < half && !isComposite)
             {
-                Parallel.ForEach(_primes, (p, loopState) =>
-                {
-                    bool com = i % p == 0;
-                    if (com)
-                    {
-                        lock(obj1)
-                        {
-                            isComposite |= com;
-                            loopState.Stop();
-                        }
-                    }
+                Parallel.ForEach(_primes.Where(p => p >= maxTested), (p, loopState) =>
+                   {
+                       bool com = i % p == 0;
+                       if (com)
+                       {
+                           lock (obj1)
+                           {
+                               isComposite |= com;
+                               loopState.Stop();
+                           }
+                       }
 
-                    Task.Run(() => {
-                        bool con = p > half;
-                        if (con)
-                        {
-                            lock (obj2)
-                            {
-                                testIsConclusive |= con;
-                            }
-                        }
-                    });
-                });
+                       Task.Run(() =>
+                       {
+                           bool con = p > half;
+                           lock (obj2)
+                           {
+                               if (con)
+                               {
+                                   maxTested = long.MaxValue;
+                               }
+                               else
+                               {
+                                   maxTested = p;
+                               }
+                           }
+                       });
+                   });
             }
 
-            return testIsConclusive && !isComposite;
+            return maxTested > half && !isComposite;
         }
 
         /// <summary>
