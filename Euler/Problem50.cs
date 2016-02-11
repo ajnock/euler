@@ -13,9 +13,9 @@ namespace Euler
         {
             var e = new Eratosthenes();
             var primes = new List<long>();
-            var sums = new ConcurrentDictionary<long, long>();
-
-            foreach (var p in e.Seive(1000000))
+            var solutionsDictionary = new ConcurrentDictionary<int, long>();
+            var max = 1000000;
+            foreach (var p in e.Seive(max))
             {
                 primes.Add(p);
                 Console.WriteLine(p);
@@ -23,23 +23,27 @@ namespace Euler
 
             Parallel.ForEach(primes, p =>
             {
-                var sum = p;
-                foreach (var q in primes.Where(a => a > p).OrderBy(a => a))
+                int count = 1;
+                long sum = p;
+                foreach (var q in primes.Where(q => q > p).OrderBy(q => q))
                 {
-                    var tmp = sum + q;
-                    if (primes.Contains(tmp))
+                    sum += q;
+                    count++;
+
+                    if (sum > max)
                     {
-                        sum = tmp;
-                    }
-                    else
-                    {
-                        sums.TryAdd(q, sum);
                         break;
+                    }
+
+                    if (primes.Contains(sum))
+                    {
+                        solutionsDictionary.AddOrUpdate(count, sum, (k, v) => sum);
                     }
                 }
             });
 
-            return sums.Values.Max();
+            var solution = solutionsDictionary.OrderBy(kvp => kvp.Key).Last();
+            return solution.Key + " => " + solution.Value;
         }
     }
 }
