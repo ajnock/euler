@@ -73,7 +73,7 @@ namespace Euler
         public IEnumerable<long> Seive(long max = long.MaxValue)
         {
             yield return 2;
-
+            yield return 3;
             long i = 3;
             _primes.Enqueue(3);
             while (i <= max)
