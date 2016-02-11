@@ -15,7 +15,7 @@ namespace Euler
             var primes = new List<long>();
             var solutionsDictionary = new ConcurrentDictionary<int, long>();
             var max = 1000000;
-            foreach (var p in e.Seive(max))
+            foreach (var p in e.Sieve(max))
             {
                 primes.Add(p);
                 Console.WriteLine(p);

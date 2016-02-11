@@ -11,7 +11,7 @@ namespace Euler
         public override object Solve()
         {
             var e = new Eratosthenes();
-            var primes = e.Seive(10000).Where(p => p > 999 && p < 10000 && !p.ToString().Contains("0"));
+            var primes = e.Sieve(10000).Where(p => p > 999 && p < 10000 && !p.ToString().Contains("0"));
             var dictionary = new Dictionary<string, List<long>>();
             foreach (var p in primes)
             {

@@ -70,7 +70,7 @@ namespace Euler
         /// </summary>
         /// <param name="max"></param>
         /// <returns></returns>
-        public IEnumerable<long> Seive(long max = long.MaxValue)
+        public IEnumerable<long> Sieve(long max = long.MaxValue)
         {
             yield return 2;
             yield return 3;

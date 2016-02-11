@@ -18,7 +18,7 @@ namespace Euler
         {
             var seive = new Eratosthenes();
             int max = 7654321;
-            var primes = seive.Seive(max / 3).ToList(); ;
+            var primes = seive.Sieve(max / 3).ToList(); ;
 
             for (int i = max; i > 0; i -= 2)
             {

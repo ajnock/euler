@@ -11,7 +11,7 @@ namespace Euler
         public override object Solve()
         {
             var e = new Eratosthenes();
-            return e.Seive(2000000).Sum();
+            return e.Sieve(2000000).Sum();
         }
     }
 }
