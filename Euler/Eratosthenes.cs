@@ -32,33 +32,35 @@ namespace Euler
             bool isComposite = false;
             while (maxTested < half && !isComposite)
             {
-                Parallel.ForEach(_primes.Where(p => p >= maxTested), (p, loopState) =>
+                Parallel.ForEach(_primes.Where(p => p >= maxTested), (p, loop) =>
                    {
+                       if (isComposite)
+                       {
+                           loop.Stop();
+                       }
+
                        bool com = i % p == 0;
                        if (com)
                        {
                            lock (obj1)
                            {
                                isComposite |= com;
-                               loopState.Stop();
+                               loop.Stop();
                            }
                        }
 
-                       Task.Run(() =>
+                       bool con = p > half;
+                       lock (obj2)
                        {
-                           bool con = p > half;
-                           lock (obj2)
+                           if (con)
                            {
-                               if (con)
-                               {
-                                   maxTested = long.MaxValue;
-                               }
-                               else
-                               {
-                                   maxTested = p;
-                               }
+                               maxTested = long.MaxValue;
                            }
-                       });
+                           else
+                           {
+                               maxTested = p;
+                           }
+                       }
                    });
             }
 
@@ -73,14 +75,13 @@ namespace Euler
         public IEnumerable<long> Sieve(long max = long.MaxValue)
         {
             yield return 2;
-            yield return 3;
             long i = 3;
-            _primes.Enqueue(3);
+            _primes.Enqueue(2);
             while (i <= max)
             {
                 if (IsPrime(i))
                 {
-                    //Console.WriteLine(i);
+                    Console.WriteLine(i);
                     _primes.Enqueue(i);
                     yield return i;
                 }
