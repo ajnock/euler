@@ -35,11 +35,14 @@ namespace Euler
                 return 1;
             }
 
+            Console.WriteLine("Solving " + problem.GetType().Name + " " + DateTime.Now);
+
             var timer = new Stopwatch();
             timer.Start();
             object solution = problem.Solve();
             timer.Stop();
 
+            Console.WriteLine("Solved " + problem.GetType().Name + " " + DateTime.Now);
             Console.WriteLine();
             Console.WriteLine("=========================================");
             Console.WriteLine("Solved in " + timer.Elapsed.TotalSeconds + "s");
