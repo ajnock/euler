@@ -9,41 +9,52 @@ namespace Euler
 {
     public class Problem50 : Problem
     {
+        volatile int maxCount = 0;
+
         public override object Solve()
         {
+            object obj = new object();
             var e = new Eratosthenes();
-            var primes = new List<long>();
-            var solutionsDictionary = new ConcurrentDictionary<int, long>();
-            var max = 1000000;
-            foreach (var p in e.Sieve(max))
-            {
-                primes.Add(p);
-                Console.WriteLine(p);
-            };
+            long max = 1000000;
+            var primes = e.Sieve(max).ToList();
+            object solution = null;
 
-            Parallel.ForEach(primes, p =>
-            {
-                int count = 1;
-                long sum = p;
-                foreach (var q in primes.Where(q => q > p).OrderBy(q => q))
-                {
-                    sum += q;
-                    count++;
+            Parallel.ForEach(primes.Where(p => p < max / 2), p =>
+                   {
+                       long sum = p;
+                       int count = 1;
+                       string work = p.ToString();
+                       foreach (var q in primes.Where(q => q > p).OrderBy(q => q))
+                       {
+                           if (sum > max)
+                           {
+                               break;
+                           }
 
-                    if (sum > max)
-                    {
-                        break;
-                    }
+                           count++;
+                           sum += q;
+                           work += " + " + q;
 
-                    if (primes.Contains(sum))
-                    {
-                        solutionsDictionary.AddOrUpdate(count, sum, (k, v) => sum);
-                    }
-                }
-            });
+                           if (primes.Contains(sum))
+                           {
+                               if (count > maxCount)
+                               {
+                                   lock (obj)
+                                   {
+                                       if (count > maxCount)
+                                       {
+                                           Console.WriteLine(count + " => " + sum);
 
-            var solution = solutionsDictionary.OrderBy(kvp => kvp.Key).Last();
-            return solution.Key + " => " + solution.Value;
+                                           maxCount = count;
+                                           solution = work + " = " + sum;
+                                       }
+                                   }
+                               }
+                           }
+                       }
+                   });
+
+            return solution;
         }
     }
 }

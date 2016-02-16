@@ -14,7 +14,8 @@ namespace Euler
             { 96, new Problem96() },
             { 49, new Problem49() },
             { 111, new Problem111() },
-            { 50, new Problem50() }
+            { 50, new Problem50() },
+            { 58, new Problem58() }
         };
         static int Main(string[] args)
         {
@@ -26,7 +27,7 @@ namespace Euler
                 //Console.WriteLine("Enter a problem number { " + string.Join(", ", Problems.Keys) + " }");
                 //return -1;
 
-                problem = new Problem50();
+                problem = new Problem58();
             }
             else if (!int.TryParse(args[0], out number) || !Problems.TryGetValue(number, out problem))
             {
