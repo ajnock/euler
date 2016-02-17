@@ -27,7 +27,13 @@ namespace Euler
                 //Console.WriteLine("Enter a problem number { " + string.Join(", ", Problems.Keys) + " }");
                 //return -1;
 
-                problem = new Problem58();
+                var e = new Eratosthenes();
+                foreach (var p in e.Sieve())
+                {
+                    Console.WriteLine(p);
+                }
+
+                return -1;
             }
             else if (!int.TryParse(args[0], out number) || !Problems.TryGetValue(number, out problem))
             {
