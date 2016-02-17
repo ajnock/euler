@@ -15,7 +15,8 @@ namespace Euler
             { 49, new Problem49() },
             { 111, new Problem111() },
             { 50, new Problem50() },
-            { 58, new Problem58() }
+            { 58, new Problem58() },
+            { 118, new Problem118() }
         };
         static int Main(string[] args)
         {

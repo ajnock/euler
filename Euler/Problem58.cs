@@ -7,25 +7,6 @@ namespace Euler
 {
     class Problem58 : Problem
     {
-
-        private bool IsPrime(long p)
-        {
-            if (p % 2L == 0)
-            {
-                return false;
-            }
-
-            for (long i = 3; i <= Math.Sqrt(p) + 1L; i++)
-            {
-                if (p % i == 0 && p != i)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
         public override object Solve()
         {
             long primes = 0;
