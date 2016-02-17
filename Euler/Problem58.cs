@@ -7,38 +7,50 @@ namespace Euler
 {
     class Problem58 : Problem
     {
+
+        private bool IsPrime(long p)
+        {
+            if (p % 2L == 0)
+            {
+                return false;
+            }
+
+            for (long i = 3; i <= Math.Sqrt(p) + 1L; i++)
+            {
+                if (p % i == 0 && p != i)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         public override object Solve()
         {
-            var e = new Eratosthenes();
-
-            long seed = 3037000499;
-            long max = seed * seed;
-            List<long> primes = e.Sieve(5).ToList();
-            int cornerPrimes = 0;
-            long corner = (max - 1L) / 2L;
-            Console.WriteLine(corner);
-
-            for (long i = 1L; i < corner; i++)
+            long primes = 0;
+            for (long k = 1; k <= long.MaxValue; k++)
             {
-                long root = 2L * i + 1L;
-                long square = root * root;
-                long sideLength = root - 1L;
-                primes.AddRange(e.Continue(square));
+                var corners = new[] {
+                    4L*k*k - 2L*k + 1L,
+                    4L*k*k + 2L*k + 1L,
+                    4L*k*k + 1L,
+                };
 
-                for (int j = 0; j < 3; j++)
+                foreach (var p in corners)
                 {
-                    if (primes.Contains(square - j * sideLength))
+                    if (IsPrime(p))
                     {
-                        cornerPrimes++;
+                        primes++;
                     }
                 }
 
-                long corners = i * 4L + 1L;
-                double ratio = cornerPrimes / (double)corners;
-                Console.WriteLine(root + "^2=" + square + ": " + cornerPrimes + "/" + corners + "=" + ratio);
+                long total = 4L * k + 1;
+                double ratio = primes / (double)total;
+                Console.WriteLine(primes + "/" + total + "=" + ratio);
                 if (ratio < 0.1)
                 {
-                    return sideLength;
+                    return 2L * k + 1L;
                 }
             }
 
