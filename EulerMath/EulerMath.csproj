@@ -4,17 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{5D2B86B1-FE8B-4F77-BEB3-7406C09031E2}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{1990CB57-AB46-4358-AF49-23F1B07C4522}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Euler</RootNamespace>
-    <AssemblyName>Euler</AssemblyName>
+    <RootNamespace>EulerMath</RootNamespace>
+    <AssemblyName>EulerMath</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -22,11 +20,8 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <DocumentationFile>bin\Debug\Euler.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -45,33 +40,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Euler.cs" />
-    <Compile Include="Problem.cs" />
-    <Compile Include="Problem10.cs" />
-    <Compile Include="Problem111.cs" />
-    <Compile Include="Problem118.cs" />
-    <Compile Include="Problem134.cs" />
-    <Compile Include="Problem41.cs" />
-    <Compile Include="Problem49.cs" />
-    <Compile Include="Problem50.cs" />
-    <Compile Include="Problem58.cs" />
-    <Compile Include="Problem96.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Eratosthenes.cs" />
+    <Compile Include="NonBlockingConsole.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="p096_sudoku.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\EulerMath\EulerMath.csproj">
-      <Project>{1990cb57-ab46-4358-af49-23f1b07c4522}</Project>
-      <Name>EulerMath</Name>
-    </ProjectReference>
+    <Compile Include="Sudoku.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

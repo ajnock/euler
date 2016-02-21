@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Euler
 {
@@ -16,6 +20,7 @@ namespace Euler
             { 111, new Problem111() },
             { 50, new Problem50() },
             { 58, new Problem58() },
+            { 134, new Problem134() },
             { 118, new Problem118() }
         };
         static int Main(string[] args)
@@ -29,9 +34,9 @@ namespace Euler
                 //return -1;
 
                 var e = new Eratosthenes();
-                foreach (var p in e.Sieve())
+                foreach (var p in e.CachedSieve())
                 {
-                    Console.WriteLine(p);
+                    NonBlockingConsole.WriteLine(p.ToString());
                 }
 
                 return -1;

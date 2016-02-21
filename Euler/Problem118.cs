@@ -1,98 +1,58 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Euler
 {
-    public class Problem118 : Problem
+    class Problem118 : Problem
     {
         public override object Solve()
         {
-            var digits = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+            var e = new Eratosthenes();
+            //var primes = new List<string>();
+            var reg = new Regex(@"(.)(?=\1)");
+            var primes = e.OptimizedSieve(100000000)
+                .Select(p => p.ToString())
+                .Where(s => !s.Contains("0") && !reg.IsMatch(s))
+                .ToList();
 
-            var queue = new ConcurrentQueue<Tuple<int[], int[]>>();
-            var nodes = Expand(new int[0], digits, queue);
+            Console.WriteLine("=======================" + DateTime.Now);
+            var solution = Do(new string[0], primes).Count();
 
-            foreach (var node in nodes)
-            {
-
-            }
-
-            return null;
+            return solution;
         }
 
-        private static IEnumerable<Tuple<int[], int[]>> Expand(int[] sets, int[] digits, ConcurrentQueue<Tuple<int[], int[]>> queue)
-        {
-            var task = Task.Run(() =>
-            {
-                Produce(sets, digits, queue);
-            });
 
-            Tuple<int[], int[]> value;
-            while (task.Status == TaskStatus.Running)
+
+        private IEnumerable<string[]> Do(string[] set, ICollection<string> primes)
+        {
+            if (string.Join("", set).Length == 9)
             {
-                while (queue.TryDequeue(out value))
+                NonBlockingConsole.WriteLine(string.Join(", ", set));
+                yield return set;
+            }
+            else {
+                foreach (var p in primes)
                 {
-                    yield return value;
+                    var nextSet = new string[set.Length + 1];
+                    for (int i = 0; i < set.Length; i++)
+                    {
+                        nextSet[i] = set[i];
+                    }
+
+                    nextSet[set.Length] = p;
+
+                    var otherPrimes = primes.Where(s => s.ToCharArray().Any(c => p.ToCharArray().Contains(c))).ToList();
+                    var results = Do(nextSet, otherPrimes);
+                    foreach (var r in results)
+                    {
+                        yield return r;
+                    }
                 }
             }
-
-            while (queue.TryDequeue(out value))
-            {
-                yield return value;
-            }
-        }
-
-        private static void Produce(int[] s, int[] o, ConcurrentQueue<Tuple<int[], int[]>> queue)
-        {
-            Parallel.ForEach(o, (d) =>
-            {
-                if (IsPrime(d))
-                {
-                    var sets = s.ToList();
-                    var digits = o.ToList();
-                    sets.Add(d);
-                    digits.Remove(d);
-                    Parallel.ForEach(Expand(sets.ToArray(), digits.ToArray(), queue), (node) =>
-                    {
-                        queue.Enqueue(node);
-                    });
-                }
-
-                var next = o.Where(i => i != d);
-                Parallel.ForEach(next, (i) =>
-                {
-                    int combo1 = int.Parse(i.ToString() + d);
-                    int combo2 = int.Parse(d + i.ToString());
-                    var sets = s.ToList();
-                    var digits = o.ToList();
-
-                    var tasks = new List<Task>() {
-                        Task.Run(()=> {
-                    if (IsPrime(combo1))
-                    {
-                        sets.Add(combo1);
-                        digits.Remove(combo1);
-                        Parallel.ForEach(Expand(sets.ToArray(), digits.ToArray(), queue), (node) =>
-                        {
-                            queue.Enqueue(node);
-                        });
-                    } }),
-                        Task.Run(()=> {
-                    if (IsPrime(combo2))
-                    {
-                        sets.Add(combo2);
-                        digits.Remove(combo2);
-                        Parallel.ForEach(Expand(sets.ToArray(), digits.ToArray(), queue), (node) =>
-                        {
-                            queue.Enqueue(node);
-                        });
-                    } }) };
-                });
-            });
         }
     }
 }
