@@ -16,20 +16,18 @@ namespace Euler
             {
                 return false;
             }
-            if (p % 3 == 0)
-            {
-                return true;
-            }
 
-            for (long i = 3; i <= Math.Sqrt(p) + 1L; i++)
-            {
-                if (p % i == 0)
-                {
-                    return false;
-                }
-            }
+            bool prime = true;
+            Parallel.For(1L, (long)(Math.Sqrt(p) - 1L) / 2L, (k, loop) =>
+             {
+                 if (p % (2L * k + 1L) == 0L)
+                 {
+                     prime = false;
+                     loop.Stop();
+                 }
+             });
 
-            return true;
+            return prime;
         }
     }
 }
