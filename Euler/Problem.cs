@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Euler
@@ -18,14 +15,14 @@ namespace Euler
             }
 
             bool prime = true;
-            Parallel.For(1L, (long)(Math.Sqrt(p) - 1L) / 2L, (k, loop) =>
-             {
-                 if (p % (2L * k + 1L) == 0L)
-                 {
-                     prime = false;
-                     loop.Stop();
-                 }
-             });
+            Parallel.For(1L, (long)Math.Sqrt(p) / 2L + 1L, (k, loop) =>
+                {
+                    if (p % (2L * k + 1L) == 0L)
+                    {
+                        prime = false;
+                        loop.Stop();
+                    }
+                });
 
             return prime;
         }

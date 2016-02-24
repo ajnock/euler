@@ -14,9 +14,8 @@ namespace Euler
             var e = new Eratosthenes();
             var primes = new BlockingCollection<string>();
             var buffer = new BlockingCollection<string>();
-            var hash = new HashSet<string>();
 
-            primes.Add("1");
+            //primes.Add("1");
             primes.Add("2");
             Parallel.For(1L, 98765432L / 2L, k =>
             {
@@ -36,6 +35,7 @@ namespace Euler
                 buffer.CompleteAdding();
             });
 
+            var hash = new HashSet<string>();
             long solution = 0;
             while (!buffer.IsCompleted)
             {
@@ -64,14 +64,10 @@ namespace Euler
                 Parallel.ForEach(primes, p =>
                {
                    var nextSet = new string[set.Length + 1];
-                   for (int i = 0; i < set.Length; i++)
-                   {
-                       nextSet[i] = set[i];
-                   }
+                   set.CopyTo(nextSet, 0);
                    nextSet[set.Length] = p;
 
-                   var usedDigits = p + string.Join("", set);
-                   var otherPrimes = primes.Where(s => !s.Any(c => usedDigits.Contains(c))).ToArray();
+                   var otherPrimes = primes.Where(s => !s.Any(c => p.Contains(c) || set.Any(s2 => s2.Contains(c)))).ToArray();
 
                    Do(nextSet, otherPrimes, buffer);
                });
@@ -82,7 +78,6 @@ namespace Euler
 
                 var result = string.Join(" ", set);
 
-                //NonBlockingConsole.WriteLine(result);
                 buffer.Add(result);
             }
         }

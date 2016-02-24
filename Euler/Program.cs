@@ -36,7 +36,7 @@ namespace Euler
                 var e = new Eratosthenes();
                 foreach (var p in e.OptimizedSieve())
                 {
-                    NonBlockingConsole.WriteLine(p.ToString());
+                    NonBlockingConsole.WriteLine(p);
                 }
 
                 return -1;
