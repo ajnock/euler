@@ -11,22 +11,17 @@ namespace Euler
 {
     public static class NonBlockingConsole
     {
-        private static BlockingCollection<object> m_Queue = new BlockingCollection<object>();
+        private static BlockingCollection<object> queue = new BlockingCollection<object>();
 
         static NonBlockingConsole()
         {
             var thread = new Thread(
               () =>
               {
-                  using (var writer = new StreamWriter(File.Open(@"D:\Primes.txt", FileMode.Append, FileAccess.Write, FileShare.Read)))
+                  while (true)
                   {
-                      while (true)
-                      {
-                          var p = m_Queue.Take();
-
-                          writer.WriteLine(p);
-                          Console.WriteLine(p);
-                      }
+                      var obj = queue.Take();
+                      Console.WriteLine(obj);
                   }
               });
             thread.IsBackground = true;
@@ -35,7 +30,7 @@ namespace Euler
 
         public static void WriteLine(object value)
         {
-            m_Queue.Add(value);
+            queue.Add(value);
         }
     }
 }
