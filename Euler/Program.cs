@@ -39,6 +39,8 @@ namespace Euler
                     NonBlockingConsole.WriteLine(p);
                 }
 
+                NonBlockingConsole.Flush();
+
                 return -1;
             }
             else if (!int.TryParse(args[0], out number) || !Problems.TryGetValue(number, out problem))
@@ -54,6 +56,8 @@ namespace Euler
             timer.Start();
             object solution = problem.Solve();
             timer.Stop();
+
+            NonBlockingConsole.Flush();
 
             Console.WriteLine("Solved " + problem.GetType().Name + " " + DateTime.Now);
             Console.WriteLine();
