@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,7 +8,8 @@ namespace Euler
     public static class NonBlockingConsole
     {
         private static readonly BlockingCollection<object> queue = new BlockingCollection<object>();
-        private static readonly ManualResetEvent signal = new ManualResetEvent(false);
+        private static readonly object flushMutex = new object();
+        private static readonly ManualResetEvent flushingSignal = new ManualResetEvent(true);
         private static Worker worker;
 
         static NonBlockingConsole()
@@ -22,15 +19,23 @@ namespace Euler
 
         public static void WriteLine(object value)
         {
+            flushingSignal.WaitOne();
             queue.Add(value);
         }
 
         public static void Flush()
         {
-            worker.Flush();
+            flushingSignal.Reset();
+            lock (flushMutex)
+            {
+                worker.Flush();
+                worker.Dispose();
+                flushingSignal.Set();
+                worker = new Worker();
+            }
         }
 
-        private class Worker
+        private class Worker : IDisposable
         {
             private readonly CancellationTokenSource source;
             public readonly CancellationToken token;
@@ -40,6 +45,7 @@ namespace Euler
             {
                 source = new CancellationTokenSource();
                 token = source.Token;
+
                 task = Task.Run(() =>
                 {
                     while (!token.IsCancellationRequested)
@@ -61,18 +67,54 @@ namespace Euler
 
                 try
                 {
+                    disposedValue = true;
                     task.Wait();
                 }
-                catch (AggregateException ex)
+                catch (AggregateException)
                 {
-                    foreach (var v in ex.InnerExceptions)
-                        Console.WriteLine(ex.Message + " " + v.Message);
+                    Console.WriteLine("Flushed");
                 }
                 finally
                 {
                     source.Dispose();
                 }
             }
+
+            #region IDisposable Support
+            private bool disposedValue = false; // To detect redundant calls
+
+            protected virtual void Dispose(bool disposing)
+            {
+                if (!disposedValue)
+                {
+                    if (disposing)
+                    {
+                        // TODO: dispose managed state (managed objects).
+                        source.Dispose();
+                    }
+
+                    // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+                    // TODO: set large fields to null.
+
+                    disposedValue = true;
+                }
+            }
+
+            // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+            // ~Worker() {
+            //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            //   Dispose(false);
+            // }
+
+            // This code added to correctly implement the disposable pattern.
+            public void Dispose()
+            {
+                // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+                Dispose(true);
+                // TODO: uncomment the following line if the finalizer is overridden above.
+                // GC.SuppressFinalize(this);
+            }
+            #endregion
         }
     }
 }
