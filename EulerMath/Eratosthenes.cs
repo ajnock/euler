@@ -55,6 +55,9 @@ namespace Euler
         /// <returns></returns>
         public IEnumerable<long> Sieve(long max = long.MaxValue)
         {
+            // make max odd
+            max -= max % 2L;
+
             yield return 2;
             _primes.Add(2);
 
@@ -75,15 +78,18 @@ namespace Euler
 
         public IEnumerable<long> OptimizedSieve(long max = long.MaxValue)
         {
+            // make max odd
+            max -= max % 2L;
+
             _primes.Add(2);
             _maxSieved = 2;
             yield return 2;
-            NonBlockingConsole.WriteLine(2);
+            //NonBlockingConsole.WriteLine(2);
 
             _primes.Add(3);
             _maxSieved = 3;
             yield return 3;
-            NonBlockingConsole.WriteLine(3);
+            //NonBlockingConsole.WriteLine(3);
 
             var buffer = new BlockingCollection<long>();
             var reset = new ManualResetEvent(true);
@@ -106,7 +112,7 @@ namespace Euler
                 while (reset.WaitOne() && buffer.TryTake(out prime))
                 {
                     _primes.Add(prime);
-                    NonBlockingConsole.WriteLine(prime);
+                    //NonBlockingConsole.WriteLine(prime);
 
                     yield return prime;
                 }
