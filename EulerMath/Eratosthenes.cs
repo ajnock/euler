@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -55,9 +54,6 @@ namespace Euler
         /// <returns></returns>
         public IEnumerable<long> Sieve(long max = long.MaxValue)
         {
-            // make max odd
-            max -= max % 2L;
-
             yield return 2;
             _primes.Add(2);
 
@@ -81,65 +77,64 @@ namespace Euler
             // make max odd
             max -= max % 2L;
 
-            _primes.Add(2);
-            _maxSieved = 2;
-            yield return 2;
-            //NonBlockingConsole.WriteLine(2);
-
-            _primes.Add(3);
-            _maxSieved = 3;
-            yield return 3;
-            //NonBlockingConsole.WriteLine(3);
-
-            var buffer = new BlockingCollection<long>();
-            var reset = new ManualResetEvent(true);
-
-            var producer = Task.Run(() =>
+            foreach (var p in Sieve(9))
             {
-                while (_maxSieved < max)
-                {
-                    long page = Math.Min(_maxSieved * _maxSieved, max);
-                    Produce(buffer, page, reset);
-                }
+                yield return p;
+            }
 
-                reset.Set();
-                buffer.CompleteAdding();
-            });
-
-            while (!buffer.IsCompleted || (buffer.Any() && reset.Set()))
+            long k = 1L;
+            while (_maxSieved < max)
             {
-                long prime;
-                while (reset.WaitOne() && buffer.TryTake(out prime))
+                k++;
+                var queue = new BlockingCollection<long>();
+                var producer = Task.Run(() =>
                 {
-                    _primes.Add(prime);
-                    //NonBlockingConsole.WriteLine(prime);
+                    long root = 2L * k + 1L;
+                    long limit = Math.Min(root * root + 1L, max + 1L);
+                    long min = _maxSieved + 2L;
 
-                    yield return prime;
-                }
+                    Parallel.For(min, limit, (p) =>
+                    {
+                        long i = 2L * p + 1;
+                        if (IsPrime(i))
+                        {
+                            queue.Add(i);
+                        }
+                    });
 
-                if (!buffer.Any())
+                    queue.CompleteAdding();
+                    _maxSieved = limit - 1L;
+                });
+
+                while (!queue.IsCompleted || queue.Any())
                 {
-                    reset.Reset();
+                    long value;
+                    if (queue.TryTake(out value))
+                    {
+                        //NonBlockingConsole.WriteLine(value);
+                        yield return value;
+                    }
                 }
             }
         }
 
         private void Produce(BlockingCollection<long> buffer, long max, ManualResetEvent alert)
         {
-            long page = Math.Min(_maxSieved * _maxSieved, max);
-            long min = (_maxSieved - 1L) / 2L;
-            long limit = (page - 1L) / 2L;
-            Parallel.For(min, limit, (k) =>
+            var producer = Task.Run(() =>
             {
-                long i = 2L * k + 1;
-                if (IsPrime(i))
+                long min = (_maxSieved - 1L) / 2L;
+                long limit = (max - 1L) / 2L;
+                Parallel.For(min, limit, (k) =>
                 {
-                    buffer.Add(i);
-                    alert.Set();
-                }
-            });
+                    long i = 2L * k + 1;
+                    if (IsPrime(i))
+                    {
+                        buffer.Add(i);
+                    }
+                });
 
-            _maxSieved = max;
+                alert.Set();
+            });
         }
 
         public IEnumerable<long> CachedSieve(long max = long.MaxValue, string file = @"D:\primes.txt")
