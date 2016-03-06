@@ -1,7 +1,8 @@
-﻿using EulerMath;
+﻿using Euler;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,7 +18,7 @@ namespace Ulam
 
         internal void Save(string file)
         {
-            _map.Save(file);
+            _map.Save(file, ImageFormat.Png);
         }
 
         public Ulam(int k)
@@ -33,42 +34,66 @@ namespace Ulam
             Right, Up, Left, Down
         }
 
-        private static readonly Color Prime = Color.Green;
+        private static readonly Color Prime = Color.Black;
         private static readonly Color Composite = Color.White;
-        private static readonly Color Empty = Color.Black;
+        private static readonly Color Empty = Color.Transparent;
 
-        public void Generate()
+        private bool IsEmpty(int x, int y)
         {
-            var primes = _eratosthenes.OptimizedSieve(_max).ToList();
+            var c = _map.GetPixel(x, y);
+            return c.R == Empty.R && c.G == Empty.G && c.B == Empty.B && c.A == Empty.A;
+        }
 
-            int n = _max;
+        public async void Generate()
+        {
+            var primes = _eratosthenes.OptimizedSieve(_max).OrderBy(p => p).ToList().GetEnumerator();
+            primes.MoveNext();
+
+            for (int k = 0; k < _root; k++)
+            {
+                for (int l = 0; l < _root; l++)
+                {
+                    _map.SetPixel(l, k, Empty);
+                }
+            }
+
+            int n = _root;
             int i = 1;
 
             Direction dir = Direction.Right;
             int j = i;
-            int y = n / 2;
-            int x = (n % 2 == 0) ? y - 1 : y; //shift left for even n's
-            while (j <= ((n * n) - 1 + i))
+            int y = (int)Math.Floor((double)n / 2);
+            int x = y; // assume odd size
+
+            while (j <= _max)
             {
-                var color = primes.Contains(j) ? Prime : Composite;
+                var color = Composite;
+                if (j == primes.Current)
+                {
+                    NonBlockingConsole.WriteLine(j);
+                    color = Prime;
+                    primes.MoveNext();
+                }
+
+                //var c = _map.GetPixel(x, y);
                 _map.SetPixel(x, y, color);
 
                 switch (dir)
                 {
                     case Direction.Right:
-                        if (x <= (n - 1) && _map.GetPixel(y - 1, x) == Empty && j > i)
+                        if (x <= (n - 1) && IsEmpty(x, y - 1) && j > i)
                             dir = Direction.Up;
                         break;
                     case Direction.Up:
-                        if (_map.GetPixel(y, x - 1) == Empty)
+                        if (IsEmpty(x - 1, y))
                             dir = Direction.Left;
                         break;
                     case Direction.Left:
-                        if (x == 0 || _map.GetPixel(y + 1, x) == Empty)
+                        if (x == 0 || IsEmpty(x, y + 1))
                             dir = Direction.Down;
                         break;
                     case Direction.Down:
-                        if (_map.GetPixel(y, x + 1) == Empty)
+                        if (IsEmpty(x + 1, y))
                             dir = Direction.Right;
                         break;
                 }

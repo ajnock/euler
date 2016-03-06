@@ -10,9 +10,15 @@ namespace Ulam
     {
         static void Main(string[] args)
         {
-            var ulam = new Ulam(100);
+            int k = 100;
+            if (args.Length == 1)
+            {
+                k = int.Parse(args[0]);
+            }
+
+            var ulam = new Ulam(k);
             ulam.Generate();
-            ulam.Save(@"D:\Ulam.bmp");
+            ulam.Save(@"D:\Ulam.png");
         }
     }
 }
