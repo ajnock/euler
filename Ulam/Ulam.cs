@@ -36,7 +36,7 @@ namespace Ulam
 
         private static readonly Color Prime = Color.Black;
         private static readonly Color Composite = Color.White;
-        private static readonly Color Empty = Color.Transparent;
+        private static readonly Color Empty = Color.Green;
 
         private bool IsEmpty(int x, int y)
         {
@@ -46,16 +46,14 @@ namespace Ulam
 
         public async void Generate()
         {
-            var primes = _eratosthenes.OptimizedSieve(_max).OrderBy(p => p).ToList().GetEnumerator();
-            primes.MoveNext();
-
-            for (int k = 0; k < _root; k++)
+            using (var g = Graphics.FromImage(_map))
             {
-                for (int l = 0; l < _root; l++)
-                {
-                    _map.SetPixel(l, k, Empty);
-                }
+                var brush = new SolidBrush(Empty);
+                g.FillRectangle(brush, new Rectangle(0, 0, _root, _root));
             }
+
+            var primes = _eratosthenes.OptimizedSieveSorted(_max).GetEnumerator();
+            primes.MoveNext();
 
             int n = _root;
             int i = 1;
@@ -63,7 +61,7 @@ namespace Ulam
             Direction dir = Direction.Right;
             int j = i;
             int y = (int)Math.Floor((double)n / 2);
-            int x = y; // assume odd size
+            int x = (n % 2 == 0) ? y - 1 : y; //shift left for even n's
 
             while (j <= _max)
             {
@@ -81,7 +79,7 @@ namespace Ulam
                 switch (dir)
                 {
                     case Direction.Right:
-                        if (x <= (n - 1) && IsEmpty(x, y - 1) && j > i)
+                        if (x <= n - 1 && IsEmpty(x, y - 1) && j > i)
                             dir = Direction.Up;
                         break;
                     case Direction.Up:
