@@ -75,7 +75,10 @@ namespace Euler
         public IEnumerable<long> OptimizedSieve(long max = long.MaxValue)
         {
             // make max odd
-            max -= max % 2L;
+            if (max % 2L == 0)
+            {
+                max--;
+            }
 
             foreach (var p in Sieve(9))
             {
@@ -126,7 +129,10 @@ namespace Euler
         public IEnumerable<long> OptimizedSieveSorted(long max = long.MaxValue)
         {
             // make max odd
-            max -= max % 2L;
+            if (max % 2L == 0)
+            {
+                max--;
+            }
 
             foreach (var p in Sieve(9))
             {
