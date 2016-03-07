@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,7 +19,7 @@ namespace Ulam
 
             var ulam = new Ulam(k);
             ulam.Generate();
-            ulam.Save(@"D:\Ulam.png");
+            ulam.Save(@"D:\Ulam.bmp", ImageFormat.Bmp);
         }
     }
 }

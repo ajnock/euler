@@ -16,15 +16,15 @@ namespace Ulam
         private readonly Bitmap _map;
         private readonly int _root;
 
-        internal void Save(string file)
+        internal void Save(string file, ImageFormat format)
         {
-            _map.Save(file, ImageFormat.Png);
+            _map.Save(file, format);
         }
 
-        public Ulam(int k)
+        public Ulam(int root)
         {
             _eratosthenes = new Eratosthenes();
-            _root = 2 * k + 1;
+            _root = root;
             _max = _root * _root;
             _map = new Bitmap(_root, _root);
         }
