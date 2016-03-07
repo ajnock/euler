@@ -79,9 +79,11 @@ namespace Euler
 
             foreach (var p in Sieve(9))
             {
+                //NonBlockingConsole.WriteLine(p);
                 yield return p;
             }
 
+            var signal = new AutoResetEvent(false);
             long k = 1L;
             while (_maxSieved < max)
             {
@@ -99,17 +101,20 @@ namespace Euler
                         if (IsPrime(i))
                         {
                             queue.Add(i);
+                            signal.Set();
                         }
                     });
 
                     queue.CompleteAdding();
                     _maxSieved = limit - 1L;
+                    signal.Set();
                 });
 
-                while (!queue.IsCompleted || queue.Any())
+                while (!queue.IsCompleted && signal.WaitOne() &&
+                    (!queue.IsCompleted || queue.Any()))
                 {
                     long value;
-                    if (queue.TryTake(out value))
+                    while (queue.TryTake(out value))
                     {
                         //NonBlockingConsole.WriteLine(value);
                         yield return value;
