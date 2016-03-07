@@ -140,31 +140,47 @@ namespace Euler
                 yield return p;
             }
 
+            var signal = new AutoResetEvent(false);
             long k = 1L;
             while (_maxSieved < max)
             {
                 k++;
                 var queue = new BlockingCollection<long>();
-
-                long root = 2L * k + 1L;
-                long limit = Math.Min(root * root + 1L, max + 1L);
-                long min = _maxSieved + 2L;
-
-                Parallel.For(min, limit, (p) =>
+                var producer = Task.Run(() =>
                 {
-                    long i = 2L * p + 1;
-                    if (IsPrime(i))
+                    long root = 2L * k + 1L;
+                    long limit = Math.Min(root * root + 1L, max + 1L);
+                    long min = _maxSieved + 2L;
+
+                    Parallel.For(min, limit, (p) =>
                     {
-                        queue.Add(i);
-                    }
+                        long i = 2L * p + 1;
+                        if (IsPrime(i))
+                        {
+                            queue.Add(i);
+                            signal.Set();
+                        }
+                    });
+
+                    queue.CompleteAdding();
+                    _maxSieved = limit - 1L;
+                    signal.Set();
                 });
 
-                queue.CompleteAdding();
-                _maxSieved = limit - 1L;
-
-                foreach (var p in queue.OrderBy(p => p))
+                var sortedSet = new SortedList<long, object>();
+                while (!queue.IsCompleted && signal.WaitOne() &&
+                    (!queue.IsCompleted || queue.Any()))
                 {
-                    yield return p;
+                    long value;
+                    while (queue.TryTake(out value))
+                    {
+                        sortedSet.Add(value, null);
+                    }
+                }
+
+                foreach (var p in sortedSet)
+                {
+                    yield return p.Key;
                 }
             }
         }
