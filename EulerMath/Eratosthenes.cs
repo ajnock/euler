@@ -123,6 +123,46 @@ namespace Euler
             }
         }
 
+        public IEnumerable<long> OptimizedSieveSorted(long max = long.MaxValue)
+        {
+            // make max odd
+            max -= max % 2L;
+
+            foreach (var p in Sieve(9))
+            {
+                //NonBlockingConsole.WriteLine(p);
+                yield return p;
+            }
+
+            long k = 1L;
+            while (_maxSieved < max)
+            {
+                k++;
+                var queue = new BlockingCollection<long>();
+
+                long root = 2L * k + 1L;
+                long limit = Math.Min(root * root + 1L, max + 1L);
+                long min = _maxSieved + 2L;
+
+                Parallel.For(min, limit, (p) =>
+                {
+                    long i = 2L * p + 1;
+                    if (IsPrime(i))
+                    {
+                        queue.Add(i);
+                    }
+                });
+
+                queue.CompleteAdding();
+                _maxSieved = limit - 1L;
+
+                foreach (var p in queue.OrderBy(p => p))
+                {
+                    yield return p;
+                }
+            }
+        }
+
         private void Produce(BlockingCollection<long> buffer, long max, ManualResetEvent alert)
         {
             var producer = Task.Run(() =>
