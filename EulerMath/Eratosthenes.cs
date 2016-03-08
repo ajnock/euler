@@ -22,6 +22,10 @@ namespace Euler
 
         public bool IsPrime(long i)
         {
+            if (i % 2 == 0)
+            {
+                return false;
+            }
             object obj = new object();
             bool isComposite = false;
 
@@ -87,29 +91,31 @@ namespace Euler
             }
 
             var signal = new AutoResetEvent(false);
-            long k = 1L;
+            long count = 1L;
             while (_maxSieved < max)
             {
-                k++;
                 var queue = new BlockingCollection<long>();
                 var producer = Task.Run(() =>
                 {
-                    long root = 2L * k + 1L;
-                    long limit = Math.Min(root * root + 1L, max + 1L);
-                    long min = _maxSieved + 2L;
+                    count++;
 
-                    Parallel.For(min, limit, (p) =>
+                    long root = 2L * count + 1L;
+                    long limit = Math.Min(root * root, max);
+                    long to = (limit + 1L) / 2L;
+                    long from = (_maxSieved + 1L) / 2L;
+
+                    Parallel.For(from, to, (k) =>
                     {
-                        long i = 2L * p + 1;
-                        if (IsPrime(i))
+                        long p = 2L * k + 1;
+                        if (IsPrime(p))
                         {
-                            queue.Add(i);
+                            queue.Add(p);
                             signal.Set();
                         }
                     });
 
                     queue.CompleteAdding();
-                    _maxSieved = limit - 1L;
+                    _maxSieved = limit;
                     signal.Set();
                 });
 
@@ -120,6 +126,7 @@ namespace Euler
                     while (queue.TryTake(out value))
                     {
                         //NonBlockingConsole.WriteLine(value);
+                        _primes.Add(value);
                         yield return value;
                     }
                 }
@@ -141,29 +148,31 @@ namespace Euler
             }
 
             var signal = new AutoResetEvent(false);
-            long k = 1L;
+            long count = 1L;
             while (_maxSieved < max)
             {
-                k++;
                 var queue = new BlockingCollection<long>();
                 var producer = Task.Run(() =>
                 {
-                    long root = 2L * k + 1L;
-                    long limit = Math.Min(root * root + 1L, max + 1L);
-                    long min = _maxSieved + 2L;
+                    count++;
 
-                    Parallel.For(min, limit, (p) =>
-                    {
-                        long i = 2L * p + 1;
-                        if (IsPrime(i))
-                        {
-                            queue.Add(i);
-                            signal.Set();
-                        }
-                    });
+                    long root = 2L * count + 1L;
+                    long limit = Math.Min(root * root, max);
+                    long to = (limit + 1L) / 2L;
+                    long from = (_maxSieved + 1L) / 2L;
+
+                    Parallel.For(from, to, (k) =>
+                      {
+                          long p = 2L * k + 1;
+                          if (IsPrime(p))
+                          {
+                              queue.Add(p);
+                              signal.Set();
+                          }
+                      });
 
                     queue.CompleteAdding();
-                    _maxSieved = limit - 1L;
+                    _maxSieved = limit;
                     signal.Set();
                 });
 
@@ -174,6 +183,7 @@ namespace Euler
                     long value;
                     while (queue.TryTake(out value))
                     {
+                        _primes.Add(value);
                         sortedSet.Add(value, null);
                     }
                 }
