@@ -80,7 +80,6 @@ namespace Euler
         {
             await Task.Run(() =>
              {
-                 count++;
 
                  long root = 2L * count + 1L;
                  long limit = Math.Min(root * root, max);
