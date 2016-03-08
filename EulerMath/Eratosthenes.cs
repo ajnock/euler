@@ -180,25 +180,6 @@ namespace Euler
             }
         }
 
-        private void Produce(BlockingCollection<long> buffer, long max, ManualResetEvent alert)
-        {
-            var producer = Task.Run(() =>
-            {
-                long min = (_maxSieved - 1L) / 2L;
-                long limit = (max - 1L) / 2L;
-                Parallel.For(min, limit, (k) =>
-                {
-                    long i = 2L * k + 1;
-                    if (IsPrime(i))
-                    {
-                        buffer.Add(i);
-                    }
-                });
-
-                alert.Set();
-            });
-        }
-
         public IEnumerable<long> CachedSieve(long max = long.MaxValue, string file = @"D:\primes.txt")
         {
             long l = 0;
