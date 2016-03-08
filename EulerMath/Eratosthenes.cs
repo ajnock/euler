@@ -76,19 +76,18 @@ namespace Euler
             _maxSieved = max;
         }
 
-        private async void OptimizedProduce(BlockingCollection<long> queue, AutoResetEvent signal, long max, long count)
+        private async void OptimizedProduce(BlockingCollection<long> queue, AutoResetEvent signal, long max, long k)
         {
             await Task.Run(() =>
              {
-
-                 long root = 2L * count + 1L;
+                 long root = 2L * k + 1L;
                  long limit = Math.Min(root * root, max);
                  long to = (limit + 1L) / 2L;
                  long from = (_maxSieved + 1L) / 2L;
 
-                 Parallel.For(from, to, (k) =>
+                 Parallel.For(from, to, (i) =>
                  {
-                     long p = 2L * k + 1;
+                     long p = 2L * i + 1;
                      if (IsPrime(p))
                      {
                          queue.Add(p);
@@ -117,12 +116,12 @@ namespace Euler
             }
 
             var signal = new AutoResetEvent(false);
-            long count = 1L;
+            long k = 1L;
             while (_maxSieved < max)
             {
                 var queue = new BlockingCollection<long>();
-                count++;
-                OptimizedProduce(queue, signal, max, count);
+                k++;
+                OptimizedProduce(queue, signal, max, k);
 
                 while (!queue.IsCompleted && signal.WaitOne() &&
                     (!queue.IsCompleted || queue.Any()))
@@ -153,12 +152,12 @@ namespace Euler
             }
 
             var signal = new AutoResetEvent(false);
-            long count = 1L;
+            long k = 1L;
             while (_maxSieved < max)
             {
                 var queue = new BlockingCollection<long>();
-                count++;
-                OptimizedProduce(queue, signal, max, count);
+                k++;
+                OptimizedProduce(queue, signal, max, k);
 
                 var sortedSet = new SortedList<long, object>();
                 while (!queue.IsCompleted && signal.WaitOne() &&
