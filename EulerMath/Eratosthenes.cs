@@ -13,11 +13,11 @@ namespace Euler
     /// </summary>
     public class Eratosthenes
     {
-        private readonly List<long> _primes;
+        private readonly BlockingCollection<long> _primes;
 
         public Eratosthenes()
         {
-            _primes = new List<long>();
+            _primes = new BlockingCollection<long>();
         }
 
         public bool IsPrime(long i)
@@ -28,23 +28,28 @@ namespace Euler
             }
             object obj = new object();
             bool isComposite = false;
+            long max = 2L + (long)Math.Sqrt(i);
 
             Parallel.ForEach(_primes, (p, loop) =>
-            {
-                if (isComposite)
-                {
-                    loop.Stop();
-                }
+               {
+                   if (p > max)
+                   {
+                       return;
+                   }
+                   if (isComposite)
+                   {
+                       loop.Stop();
+                   }
 
-                if (i % p == 0)
-                {
-                    lock (obj)
-                    {
-                        isComposite |= true;
-                        loop.Stop();
-                    }
-                }
-            });
+                   if (i % p == 0)
+                   {
+                       lock (obj)
+                       {
+                           isComposite |= true;
+                           loop.Stop();
+                       }
+                   }
+               });
 
             return !isComposite;
         }
