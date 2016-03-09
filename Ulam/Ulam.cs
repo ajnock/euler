@@ -13,12 +13,36 @@ namespace Ulam
     {
         private readonly Eratosthenes _eratosthenes;
         private readonly int _max;
-        private readonly Bitmap _map;
         private readonly int _root;
+        private readonly SquareStatus[,] _key;
 
         internal void Save(string file, ImageFormat format)
         {
-            _map.Save(file, format);
+            using (var bitmap = new Bitmap(_root, _root))
+            {
+                for (int x = 0; x < _root; x++)
+                {
+                    for (int y = 0; y < _root; y++)
+                    {
+                        Color color;
+                        switch (_key[x, y])
+                        {
+                            case SquareStatus.Prime:
+                                color = Color.Black;
+                                break;
+                            case SquareStatus.Touched:
+                                color = Color.White;
+                                break;
+                            default:
+                                throw new Exception("Undefined: " + x + ", " + y);
+                        }
+
+                        bitmap.SetPixel(x, y, color);
+                    }
+                }
+
+                bitmap.Save(file, format);
+            }
         }
 
         public Ulam(int root)
@@ -26,32 +50,29 @@ namespace Ulam
             _eratosthenes = new Eratosthenes();
             _root = root;
             _max = _root * _root;
-            _map = new Bitmap(_root, _root);
+            _key = new SquareStatus[root, root];
         }
 
-        enum Direction
+        private enum Direction
         {
             Right, Up, Left, Down
         }
 
-        private static readonly Color Prime = Color.Black;
-        private static readonly Color Composite = Color.White;
-        private static readonly Color Empty = Color.Green;
+        [Flags]
+        private enum SquareStatus
+        {
+            Empty = 0x0,
+            Touched = 0x1,
+            Prime = 0x11
+        }
 
         private bool IsEmpty(int x, int y)
         {
-            var c = _map.GetPixel(x, y);
-            return c.R == Empty.R && c.G == Empty.G && c.B == Empty.B && c.A == Empty.A;
+            return _key[x, y] == SquareStatus.Empty;
         }
 
-        public async void Generate()
+        public void Generate()
         {
-            using (var g = Graphics.FromImage(_map))
-            {
-                var brush = new SolidBrush(Empty);
-                g.FillRectangle(brush, new Rectangle(0, 0, _root, _root));
-            }
-
             var primes = _eratosthenes.OptimizedSieveSorted(_max).GetEnumerator();
             primes.MoveNext();
 
@@ -65,16 +86,15 @@ namespace Ulam
 
             while (j <= _max)
             {
-                var color = Composite;
+                var status = SquareStatus.Touched;
                 if (j == primes.Current)
                 {
                     NonBlockingConsole.WriteLine(j);
-                    color = Prime;
+                    status |= SquareStatus.Prime;
                     primes.MoveNext();
                 }
 
-                //var c = _map.GetPixel(x, y);
-                _map.SetPixel(x, y, color);
+                _key[x, y] = status;
 
                 switch (dir)
                 {
