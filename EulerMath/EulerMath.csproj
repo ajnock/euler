@@ -41,7 +41,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ColorExtensions.cs" />
     <Compile Include="Eratosthenes.cs" />
     <Compile Include="Fibonacci.cs" />
     <Compile Include="NonBlockingConsole.cs" />
