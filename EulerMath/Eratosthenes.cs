@@ -88,7 +88,7 @@ namespace Euler
             _maxSieved = max;
         }
 
-        private async void OptimizedProduce(BlockingCollection<long> queue, AutoResetEvent signal, long max, long k)
+        private async void OptimizedProduce(BlockingCollection<long> queue, long max, long k)
         {
             await Task.Run(() =>
              {
@@ -103,13 +103,11 @@ namespace Euler
                      if (IsPrime(p))
                      {
                          queue.Add(p);
-                         signal.Set();
                      }
                  });
 
-                 queue.CompleteAdding();
                  _maxSieved = limit;
-                 signal.Set();
+                 queue.CompleteAdding();
              });
         }
 
@@ -132,24 +130,18 @@ namespace Euler
                 yield return p;
             }
 
-            var signal = new AutoResetEvent(false);
             long k = 1L;
             while (_maxSieved < max)
             {
                 var queue = new BlockingCollection<long>();
                 k++;
-                OptimizedProduce(queue, signal, max, k);
+                OptimizedProduce(queue, max, k);
 
-                while (!queue.IsCompleted && signal.WaitOne() &&
-                    (!queue.IsCompleted || queue.Any()))
+                foreach (var prime in queue.GetConsumingEnumerable())
                 {
-                    long value;
-                    while (queue.TryTake(out value))
-                    {
-                        //NonBlockingConsole.WriteLine(value);
-                        _primes.Add(value);
-                        yield return value;
-                    }
+                    //NonBlockingConsole.WriteLine(prime);
+                    _primes.Add(prime);
+                    yield return prime;
                 }
             }
         }
@@ -173,29 +165,25 @@ namespace Euler
                 yield return p;
             }
 
-            var signal = new AutoResetEvent(false);
             long k = 1L;
             while (_maxSieved < max)
             {
                 var queue = new BlockingCollection<long>();
                 k++;
-                OptimizedProduce(queue, signal, max, k);
+                OptimizedProduce(queue, max, k);
 
                 var sortedSet = new SortedList<long, object>();
-                while (!queue.IsCompleted && signal.WaitOne() &&
-                    (!queue.IsCompleted || queue.Any()))
+                foreach (var prime in queue.GetConsumingEnumerable())
                 {
-                    long value;
-                    while (queue.TryTake(out value))
-                    {
-                        _primes.Add(value);
-                        sortedSet.Add(value, null);
-                    }
+                    //NonBlockingConsole.WriteLine(prime);
+                    sortedSet.Add(prime, null);
                 }
 
                 foreach (var p in sortedSet)
                 {
-                    yield return p.Key;
+                    var prime = p.Key;
+                    _primes.Add(prime);
+                    yield return prime;
                 }
             }
         }
