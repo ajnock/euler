@@ -11,11 +11,31 @@ namespace Ulam
 {
     class Ulam
     {
+        /// <summary>
+        /// Prime generator
+        /// </summary>
         private readonly Eratosthenes _eratosthenes;
-        private readonly int _max;
-        private readonly int _root;
-        private readonly SquareStatus[,] _key;
 
+        /// <summary>
+        /// Max value of the spiral
+        /// </summary>
+        private readonly int _max;
+
+        /// <summary>
+        /// Square root of <see cref="_max"/>
+        /// </summary>
+        private readonly int _root;
+
+        /// <summary>
+        /// Array containing the data the is the spiral. The array is <see cref="_root"/>x<see cref="_root"/>
+        /// </summary>
+        private readonly SquareStatus[,] _map;
+
+        /// <summary>
+        /// Save the Spiral to disk as a bitmap
+        /// </summary>
+        /// <param name="file"></param>
+        /// <param name="format"></param>
         internal void Save(string file, ImageFormat format)
         {
             using (var bitmap = new Bitmap(_root, _root))
@@ -25,7 +45,7 @@ namespace Ulam
                     for (int y = 0; y < _root; y++)
                     {
                         Color color;
-                        switch (_key[x, y])
+                        switch (_map[x, y])
                         {
                             case SquareStatus.Prime:
                                 color = Color.Black;
@@ -45,19 +65,29 @@ namespace Ulam
             }
         }
 
+        /// <summary>
+        /// Create a new <see cref="Ulam"/>. Each side will be of <paramref name="root"/> length.
+        /// </summary>
+        /// <param name="root">Square root of the max value</param>
         public Ulam(int root)
         {
             _eratosthenes = new Eratosthenes();
             _root = root;
             _max = _root * _root;
-            _key = new SquareStatus[root, root];
+            _map = new SquareStatus[root, root];
         }
 
+        /// <summary>
+        /// Direction the spiral is moving in Cartesian coordinates
+        /// </summary>
         private enum Direction
         {
             Right, Up, Left, Down
         }
 
+        /// <summary>
+        /// The type of integer contained in the sqare
+        /// </summary>
         [Flags]
         private enum SquareStatus
         {
@@ -66,11 +96,20 @@ namespace Ulam
             Prime = 0x11
         }
 
+        /// <summary>
+        /// True if the space on the spiral has not been marked.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
         private bool IsEmpty(int x, int y)
         {
-            return _key[x, y] == SquareStatus.Empty;
+            return _map[x, y] == SquareStatus.Empty;
         }
 
+        /// <summary>
+        /// Generates the spiral in <see cref="_map"/>
+        /// </summary>
         public void Generate()
         {
             var primes = _eratosthenes.OptimizedSieveSorted(_max).GetEnumerator();
@@ -94,7 +133,7 @@ namespace Ulam
                     primes.MoveNext();
                 }
 
-                _key[x, y] = status;
+                _map[x, y] = status;
 
                 switch (dir)
                 {
@@ -131,6 +170,7 @@ namespace Ulam
                         y++;
                         break;
                 }
+
                 j++;
             }
         }

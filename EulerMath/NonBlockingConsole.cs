@@ -17,12 +17,19 @@ namespace Euler
             worker = new Worker();
         }
 
+        /// <summary>
+        /// Writes to the console in a non-blocking manner
+        /// </summary>
+        /// <param name="value"></param>
         public static void WriteLine(object value)
         {
             flushingSignal.WaitOne();
             queue.Add(value);
         }
 
+        /// <summary>
+        /// Blocks until the queue has been flushed to the console
+        /// </summary>
         public static void Flush()
         {
             flushingSignal.Reset();

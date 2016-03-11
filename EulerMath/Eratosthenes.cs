@@ -13,8 +13,14 @@ namespace Euler
     /// </summary>
     public class Eratosthenes
     {
+        /// <summary>
+        /// All primes found so far
+        /// </summary>
         private readonly BlockingCollection<long> _primes;
 
+        /// <summary>
+        /// Creates a new instance
+        /// </summary>
         public Eratosthenes()
         {
             _primes = new BlockingCollection<long>();
@@ -58,6 +64,7 @@ namespace Euler
 
         /// <summary>
         /// Returns all primes up to the max value.
+        /// This implementation is single threaded.
         /// </summary>
         /// <param name="max"></param>
         /// <returns></returns>
@@ -106,6 +113,11 @@ namespace Euler
              });
         }
 
+        /// <summary>
+        /// Optimized method that does not return primes in order.
+        /// </summary>
+        /// <param name="max"></param>
+        /// <returns></returns>
         public IEnumerable<long> OptimizedSieve(long max = long.MaxValue)
         {
             // make max odd
@@ -142,6 +154,11 @@ namespace Euler
             }
         }
 
+        /// <summary>
+        /// Optimized method that returns primes in ascending order.
+        /// </summary>
+        /// <param name="max"></param>
+        /// <returns></returns>
         public IEnumerable<long> OptimizedSieveSorted(long max = long.MaxValue)
         {
             // make max odd
@@ -234,6 +251,9 @@ namespace Euler
             _maxSieved = max;
         }
 
+        /// <summary>
+        /// Returns an array of all primes sieved so far.
+        /// </summary>
         public long[] Primes
         {
             get { return _primes.ToArray(); ; }
