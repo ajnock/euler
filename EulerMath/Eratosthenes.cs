@@ -30,7 +30,7 @@ namespace Euler
             bool isComposite = false;
             long max = 2L + (long)Math.Sqrt(i);
 
-            Parallel.ForEach(_primes, (p, loop) =>
+            Parallel.ForEach(_primes.Where(p => p <= max), (p, loop) =>
                {
                    if (p > max)
                    {
