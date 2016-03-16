@@ -11,15 +11,12 @@ namespace Ulam
     {
         static void Main(string[] args)
         {
-            int k = 100;
-            if (args.Length == 1)
-            {
-                k = int.Parse(args[0]);
-            }
+            int k = int.Parse(args[0]);
 
             var ulam = new Ulam(k);
+
             ulam.Generate();
-            ulam.Save(@"D:\Ulam" + k + "x" + k + ".bmp", ImageFormat.Bmp);
+            ulam.Save(args[1]);
         }
     }
 }
