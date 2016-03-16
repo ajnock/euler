@@ -36,9 +36,9 @@ namespace Ulam
         /// </summary>
         /// <param name="file"></param>
         /// <param name="format"></param>
-        internal void Save(string file, ImageFormat format)
+        internal void Save(string file)
         {
-            using (var bitmap = new Bitmap(_root, _root))
+            using (var bitmap = new Bitmap(_root, _root, PixelFormat.Format16bppRgb555))
             {
                 for (int x = 0; x < _root; x++)
                 {
@@ -61,7 +61,7 @@ namespace Ulam
                     }
                 }
 
-                bitmap.Save(file, format);
+                bitmap.Save(file, ImageFormat.Bmp);
             }
         }
 
@@ -107,10 +107,22 @@ namespace Ulam
             return _map[x, y] == SquareStatus.Empty;
         }
 
+        private delegate void FrameAction(SquareStatus[,] map);
+
+        public void GenerateGif(string file)
+        {
+
+        }
+
         /// <summary>
         /// Generates the spiral in <see cref="_map"/>
         /// </summary>
         public void Generate()
+        {
+            Generate(null);
+        }
+
+        private void Generate(FrameAction actOnFrame = null)
         {
             var primes = _eratosthenes.OptimizedSieveSorted(_max).GetEnumerator();
             primes.MoveNext();
@@ -134,6 +146,11 @@ namespace Ulam
                 }
 
                 _map[x, y] = status;
+
+                if (actOnFrame != null)
+                {
+                    actOnFrame(_map);
+                }
 
                 switch (dir)
                 {
