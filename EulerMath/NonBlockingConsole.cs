@@ -65,7 +65,7 @@ namespace Euler
                     }
 
                     token.ThrowIfCancellationRequested();
-                });
+                }, token);
             }
 
             public void Flush()
