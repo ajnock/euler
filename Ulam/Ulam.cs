@@ -71,7 +71,7 @@ namespace Ulam
                     }
                 }
 
-                bitmap.Save(file + ".png", ImageFormat.Png);
+                bitmap.Save(file, ImageFormat.Png);
             }
         }
 
