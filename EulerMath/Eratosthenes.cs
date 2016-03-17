@@ -172,7 +172,7 @@ namespace Euler
             }
         }
 
-        public IEnumerable<long> CachedSieve(long max = long.MaxValue, string file = @"D:\primes.txt")
+        public IEnumerable<long> CachedSieve(long max = long.MaxValue, string file = @"D:\primes100000000.txt")
         {
             long l = 0;
             using (var reader = new StreamReader(File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
@@ -181,7 +181,6 @@ namespace Euler
                 while ((line = reader.ReadLine()) != null)
                 {
                     l = long.Parse(line);
-
                     _primes.Add(l);
                     yield return l;
                 }
