@@ -31,5 +31,20 @@ namespace EulerMath
             var root = (long)Math.Round(Math.Sqrt(n));
             return root * root == n;
         }
+
+        public static IEnumerable<long> GetFibonaccis(long max)
+        {
+            long f0 = 0;
+            long f1 = 1;
+            long f2 = f0 + f1;
+
+            while (f0 + f1 <= max)
+            {
+                f2 = f0 + f1;
+                f0 = f1;
+                f1 = f2;
+                yield return f2;
+            }
+        }
     }
 }

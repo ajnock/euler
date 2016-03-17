@@ -9,6 +9,17 @@ using System.Threading.Tasks;
 
 namespace Ulam
 {
+    /// <summary>
+    /// The type of integer contained in the sqare
+    /// </summary>
+    [Flags]
+    public enum SquareStatus
+    {
+        Empty = 0x0,
+        Touched = 0x1,
+        Prime = 0x11
+    }
+
     class Ulam
     {
         /// <summary>
@@ -35,10 +46,9 @@ namespace Ulam
         /// Save the Spiral to disk as a bitmap
         /// </summary>
         /// <param name="file"></param>
-        /// <param name="format"></param>
         internal void Save(string file)
         {
-            using (var bitmap = new Bitmap(_root, _root, PixelFormat.Format16bppRgb555))
+            using (var bitmap = new Bitmap(_root, _root))
             {
                 for (int x = 0; x < _root; x++)
                 {
@@ -61,7 +71,7 @@ namespace Ulam
                     }
                 }
 
-                bitmap.Save(file, ImageFormat.Bmp);
+                bitmap.Save(file + ".png", ImageFormat.Png);
             }
         }
 
@@ -83,17 +93,6 @@ namespace Ulam
         private enum Direction
         {
             Right, Up, Left, Down
-        }
-
-        /// <summary>
-        /// The type of integer contained in the sqare
-        /// </summary>
-        [Flags]
-        private enum SquareStatus
-        {
-            Empty = 0x0,
-            Touched = 0x1,
-            Prime = 0x11
         }
 
         /// <summary>
