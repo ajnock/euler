@@ -67,7 +67,6 @@ namespace Euler
             {
                 if (IsPrime(i))
                 {
-                    //NonBlockingConsole.WriteLine(i);
                     _primes.Add(i);
                     yield return i;
                 }
@@ -115,7 +114,6 @@ namespace Euler
 
             foreach (var p in Sieve(9))
             {
-                //NonBlockingConsole.WriteLine(p);
                 yield return p;
             }
 
@@ -128,7 +126,6 @@ namespace Euler
 
                 foreach (var prime in queue.GetConsumingEnumerable())
                 {
-                    //NonBlockingConsole.WriteLine(prime);
                     _primes.Add(prime);
                     yield return prime;
                 }
