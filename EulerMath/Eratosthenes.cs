@@ -34,28 +34,16 @@ namespace Euler
             {
                 return false;
             }
-            object obj = new object();
+
             bool isComposite = false;
-            long max = 2L + (long)Math.Sqrt(i);
+            long max = 1L + (long)Math.Sqrt(i);
 
             Parallel.ForEach(_primes.Where(p => p <= max), (p, loop) =>
                {
-                   if (p > max)
-                   {
-                       return;
-                   }
-                   if (isComposite)
-                   {
-                       loop.Stop();
-                   }
-
                    if (i % p == 0)
                    {
-                       lock (obj)
-                       {
-                           isComposite |= true;
-                           loop.Stop();
-                       }
+                       isComposite = true;
+                       loop.Stop();
                    }
                });
 
@@ -162,7 +150,6 @@ namespace Euler
 
             foreach (var p in Sieve(9))
             {
-                //NonBlockingConsole.WriteLine(p);
                 yield return p;
             }
 
@@ -176,7 +163,6 @@ namespace Euler
                 var sortedSet = new SortedList<long, object>();
                 foreach (var prime in queue.GetConsumingEnumerable())
                 {
-                    //NonBlockingConsole.WriteLine(prime);
                     sortedSet.Add(prime, null);
                 }
 
