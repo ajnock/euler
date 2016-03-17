@@ -18,6 +18,8 @@ namespace Euler
         /// </summary>
         private readonly BlockingCollection<long> _primes;
 
+        long _maxSieved;
+
         /// <summary>
         /// Creates a new instance
         /// </summary>
@@ -60,7 +62,6 @@ namespace Euler
             return !isComposite;
         }
 
-        long _maxSieved;
 
         /// <summary>
         /// Returns all primes up to the max value.
