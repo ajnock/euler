@@ -76,29 +76,6 @@ namespace Euler
             _maxSieved = max;
         }
 
-        private async void OptimizedProduce(BlockingCollection<long> queue, long max, long k)
-        {
-            await Task.Run(() =>
-             {
-                 long root = 2L * k + 1L;
-                 long limit = Math.Min(root * root, max);
-                 long to = (limit + 1L) / 2L;
-                 long from = (_maxSieved + 1L) / 2L;
-
-                 Parallel.For(from, to, (i) =>
-                 {
-                     long p = 2L * i + 1;
-                     if (IsPrime(p))
-                     {
-                         queue.Add(p);
-                     }
-                 });
-
-                 _maxSieved = limit;
-                 queue.CompleteAdding();
-             });
-        }
-
         /// <summary>
         /// Optimized method that does not return primes in order.
         /// </summary>
@@ -120,15 +97,22 @@ namespace Euler
             long k = 1L;
             while (_maxSieved < max)
             {
-                var queue = new BlockingCollection<long>();
                 k++;
-                OptimizedProduce(queue, max, k);
+                long root = 2L * k + 1L;
+                long limit = Math.Min(root * root, max);
 
-                foreach (var prime in queue.GetConsumingEnumerable())
+                var page = ParallelEnumerable.Range(
+                    (int)Math.Ceiling((double)_maxSieved / 2),
+                    (int)Math.Ceiling((double)(limit - _maxSieved) / 2))
+                    .Select(i => 2L * i + 1L)
+                    .Where(p => IsPrime(p));
+
+                foreach (var p in page)
                 {
-                    _primes.Add(prime);
-                    yield return prime;
+                    yield return p;
                 }
+
+                _maxSieved = limit;
             }
         }
 
@@ -153,22 +137,23 @@ namespace Euler
             long k = 1L;
             while (_maxSieved < max)
             {
-                var queue = new BlockingCollection<long>();
                 k++;
-                OptimizedProduce(queue, max, k);
+                long root = 2L * k + 1L;
+                long limit = Math.Min(root * root, max);
 
-                var sortedSet = new SortedList<long, object>();
-                foreach (var prime in queue.GetConsumingEnumerable())
+                var page = ParallelEnumerable.Range(
+                    (int)Math.Ceiling((double)_maxSieved / 2),
+                    (int)Math.Ceiling((double)(limit - _maxSieved) / 2))
+                    .AsOrdered()
+                    .Select(i => 2L * i + 1L)
+                    .Where(p => IsPrime(p));
+
+                foreach (var p in page)
                 {
-                    sortedSet.Add(prime, null);
+                    yield return p;
                 }
 
-                foreach (var p in sortedSet)
-                {
-                    var prime = p.Key;
-                    _primes.Add(prime);
-                    yield return prime;
-                }
+                _maxSieved = limit;
             }
         }
 
