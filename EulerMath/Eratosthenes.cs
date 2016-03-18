@@ -85,9 +85,9 @@ namespace Euler
                  long to = (limit + 1L) / 2L;
                  long from = (_maxSieved + 1L) / 2L;
 
-                 Parallel.For(from, to, (i) =>
+                 Parallel.For(from, to, i =>
                  {
-                     long p = 2L * i + 1;
+                     long p = 2L * i + 1L;
                      if (IsPrime(p))
                      {
                          queue.Add(p);
