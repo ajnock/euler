@@ -28,26 +28,65 @@ namespace Euler
             _primes = new BlockingCollection<long>();
         }
 
-        public bool IsPrime(long i)
+        private class Head
         {
-            if (i % 2 == 0)
+            public long Prime;
+            public long Multiple;
+
+            public Head(long p)
             {
-                return false;
+                Prime = p;
+                Multiple = p;
             }
 
-            bool isComposite = false;
+            public void Increment()
+            {
+                Multiple += Prime;
+            }
+        }
+        public IEnumerable<long> Sieve2(long max = long.MaxValue)
+        {
+            var heads = new List<Head>();
+            heads.Add(new Head(2));
+            long pointer = 2;
+            _maxSieved = 2;
+            yield return 2;
+
+            while (_maxSieved < max)
+            {
+                pointer++;
+                _maxSieved = pointer;
+
+                if (!heads.Any(p => p.Prime == pointer))
+                {
+                    heads.Add(new Head(pointer));
+                    yield return pointer;
+                }
+                foreach (var head in heads)
+                {
+                    if (head.Prime <= pointer)
+                    {
+                        head.Increment();
+                    }
+                }
+            }
+        }
+
+        public bool IsPrime(long i)
+        {
+            bool isPrime = true;
             long max = 1L + (long)Math.Sqrt(i);
 
             Parallel.ForEach(_primes.Where(p => p <= max), (p, loop) =>
                {
                    if (i % p == 0)
                    {
-                       isComposite = true;
+                       isPrime = false;
                        loop.Stop();
                    }
                });
 
-            return !isComposite;
+            return isPrime;
         }
 
 
@@ -76,9 +115,9 @@ namespace Euler
             _maxSieved = max;
         }
 
-        private async void OptimizedProduce(BlockingCollection<long> queue, long max, long k)
+        private Task OptimizedProduce(BlockingCollection<long> queue, long max, long k)
         {
-            await Task.Run(() =>
+            return Task.Run(() =>
              {
                  long root = 2L * k + 1L;
                  long limit = Math.Min(root * root, max);
@@ -118,15 +157,29 @@ namespace Euler
             }
 
             long k = 1L;
+            var queue = new BlockingCollection<long>();
+            queue.CompleteAdding();
+            var nextQueue = new BlockingCollection<long>();
+
+            Task producer = null;
             while (_maxSieved < max)
             {
-                var queue = new BlockingCollection<long>();
                 k++;
-                OptimizedProduce(queue, max, k);
+                if (!queue.IsAddingCompleted)
+                {
+                    producer.Wait();
+                }
+                producer = OptimizedProduce(queue, max, k);
 
                 foreach (var prime in queue.GetConsumingEnumerable())
                 {
                     _primes.Add(prime);
+
+                    if (queue.IsAddingCompleted)
+                    {
+
+                    }
+
                     yield return prime;
                 }
             }

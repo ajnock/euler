@@ -13,7 +13,7 @@ namespace Ulam
         {
             int k = int.Parse(args[0]);
 
-            var ulam = new Ulam(k);
+            var ulam = new UlamSpiral(k);
 
             ulam.Generate();
             ulam.Save(args[1]);

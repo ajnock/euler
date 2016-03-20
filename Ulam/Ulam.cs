@@ -20,7 +20,7 @@ namespace Ulam
         Prime = 0x11
     }
 
-    class Ulam
+    public class UlamSpiral
     {
         /// <summary>
         /// Prime generator
@@ -41,6 +41,20 @@ namespace Ulam
         /// Array containing the data the is the spiral. The array is <see cref="_root"/>x<see cref="_root"/>
         /// </summary>
         private readonly SquareStatus[,] _map;
+
+        public bool[,] GetMap()
+        {
+            var map = new bool[_root, _root];
+            for (int x = 0; x < _root; x++)
+            {
+                for (int y = 0; y < _root; y++)
+                {
+                    map[x, y] = _map[x, y] == SquareStatus.Prime ? true : false;
+                }
+            }
+
+            return map;
+        }
 
         /// <summary>
         /// Save the Spiral to disk as a bitmap
@@ -76,10 +90,10 @@ namespace Ulam
         }
 
         /// <summary>
-        /// Create a new <see cref="Ulam"/>. Each side will be of <paramref name="root"/> length.
+        /// Create a new <see cref="UlamSpiral"/>. Each side will be of <paramref name="root"/> length.
         /// </summary>
         /// <param name="root">Square root of the max value</param>
-        public Ulam(int root)
+        public UlamSpiral(int root)
         {
             _eratosthenes = new Eratosthenes();
             _root = root;
@@ -188,6 +202,14 @@ namespace Ulam
                 }
 
                 j++;
+            }
+        }
+
+        public int Root
+        {
+            get
+            {
+                return _root;
             }
         }
     }
