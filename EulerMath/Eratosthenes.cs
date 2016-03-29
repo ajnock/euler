@@ -115,7 +115,7 @@ namespace Euler
             _maxSieved = max;
         }
 
-        private Task OptimizedProduce(BlockingCollection<long> queue, long max, long k)
+        private Task Produce(BlockingCollection<long> queue, long max, long k)
         {
             return Task.Run(() =>
              {
@@ -169,7 +169,7 @@ namespace Euler
                 {
                     producer.Wait();
                 }
-                producer = OptimizedProduce(queue, max, k);
+                producer = Produce(queue, max, k);
 
                 foreach (var prime in queue.GetConsumingEnumerable())
                 {
@@ -208,7 +208,7 @@ namespace Euler
             {
                 var queue = new BlockingCollection<long>();
                 k++;
-                OptimizedProduce(queue, max, k);
+                Produce(queue, max, k);
 
                 var sortedSet = new SortedList<long, object>();
                 foreach (var prime in queue.GetConsumingEnumerable())

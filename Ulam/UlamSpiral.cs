@@ -10,6 +10,16 @@ using System.Threading.Tasks;
 namespace Ulam
 {
     /// <summary>
+    /// Direction the spiral is moving in Cartesian coordinates
+    /// </summary>
+    public enum Direction
+    {
+        Invalid = -1,
+        Right, Up, Left, Down
+    }
+
+
+    /// <summary>
     /// The type of integer contained in the sqare
     /// </summary>
     [Flags]
@@ -102,14 +112,6 @@ namespace Ulam
         }
 
         /// <summary>
-        /// Direction the spiral is moving in Cartesian coordinates
-        /// </summary>
-        private enum Direction
-        {
-            Right, Up, Left, Down
-        }
-
-        /// <summary>
         /// True if the space on the spiral has not been marked.
         /// </summary>
         /// <param name="x"></param>
@@ -120,7 +122,7 @@ namespace Ulam
             return _map[x, y] == SquareStatus.Empty;
         }
 
-        private delegate void FrameAction(SquareStatus[,] map);
+        public delegate void FrameAction(SquareStatus[,] map, int p = 0, Direction d = Direction.Invalid);
 
         public void GenerateGif(string file)
         {
@@ -135,7 +137,7 @@ namespace Ulam
             Generate(null);
         }
 
-        private void Generate(FrameAction actOnFrame = null)
+        public void Generate(FrameAction actOnFrame = null)
         {
             var primes = _eratosthenes.OptimizedSieveSorted(_max).GetEnumerator();
             primes.MoveNext();
@@ -159,11 +161,6 @@ namespace Ulam
                 }
 
                 _map[x, y] = status;
-
-                if (actOnFrame != null)
-                {
-                    actOnFrame(_map);
-                }
 
                 switch (dir)
                 {
@@ -199,6 +196,11 @@ namespace Ulam
                     case Direction.Down:
                         y++;
                         break;
+                }
+
+                if (actOnFrame != null)
+                {
+                    actOnFrame(_map, j, dir);
                 }
 
                 j++;

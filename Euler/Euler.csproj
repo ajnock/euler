@@ -52,6 +52,8 @@
     <Compile Include="Problem111.cs" />
     <Compile Include="Problem118.cs" />
     <Compile Include="Problem134.cs" />
+    <Compile Include="Problem154.cs" />
+    <Compile Include="Promblem28.cs" />
     <Compile Include="Problem41.cs" />
     <Compile Include="Problem49.cs" />
     <Compile Include="Problem50.cs" />
@@ -72,6 +74,10 @@
     <ProjectReference Include="..\EulerMath\EulerMath.csproj">
       <Project>{1990cb57-ab46-4358-af49-23f1b07c4522}</Project>
       <Name>EulerMath</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ulam\Ulam.csproj">
+      <Project>{353c80b2-6eb3-498e-934f-72fd5b8901cd}</Project>
+      <Name>Ulam</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
