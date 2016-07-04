@@ -5,13 +5,15 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using EulerMath;
+using System.Linq;
 
 namespace Euler
 {
     /// <summary>
     /// Prime seive
     /// </summary>
-    public class Eratosthenes
+    public class Eratosthenes : IPrimeGenerator
     {
         /// <summary>
         /// All primes found so far
@@ -26,6 +28,14 @@ namespace Euler
         public Eratosthenes()
         {
             _primes = new BlockingCollection<long>();
+        }
+
+        public IEnumerable<long> PrimesEnumerable
+        {
+            get
+            {
+                return _primes;
+            }
         }
 
         private class Head
@@ -88,7 +98,6 @@ namespace Euler
 
             return isPrime;
         }
-
 
         /// <summary>
         /// Returns all primes up to the max value.
@@ -165,21 +174,11 @@ namespace Euler
             while (_maxSieved < max)
             {
                 k++;
-                if (!queue.IsAddingCompleted)
-                {
-                    producer.Wait();
-                }
                 producer = Produce(queue, max, k);
 
                 foreach (var prime in queue.GetConsumingEnumerable())
                 {
                     _primes.Add(prime);
-
-                    if (queue.IsAddingCompleted)
-                    {
-
-                    }
-
                     yield return prime;
                 }
             }
