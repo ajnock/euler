@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,7 +24,8 @@ namespace Euler
             { 134, new Problem134() },
             { 118, new Problem118() },
             { 28, new Promblem28() },
-            { 154, new Problem154() }
+            { 154, new Problem154() },
+            { 0, new SequentialPrimeRatio()}
         };
         static int Main(string[] args)
         {
@@ -35,17 +37,17 @@ namespace Euler
                 //Console.WriteLine("Enter a problem number { " + string.Join(", ", Problems.Keys) + " }");
                 //return -1;
 
-                //var e = new Eratosthenes();
-                //foreach (var p in e.OptimizedSieve())
-                //{
-                //    NonBlockingConsole.WriteLine(p);
-                //}
+                var e = new Eratosthenes();
+                foreach (var p in e.OptimizedSieveSorted())
+                {
+                    NonBlockingConsole.WriteLine(p);
+                }
 
-                //NonBlockingConsole.Flush();
+                NonBlockingConsole.Flush();
 
-                //return -1;
+                return -1;
 
-                problem = Problems.Last().Value;
+                //problem = Problems.Last().Value;
             }
             else if (!int.TryParse(args[0], out number) || !Problems.TryGetValue(number, out problem))
             {
@@ -61,7 +63,13 @@ namespace Euler
             object solution = problem.Solve();
             timer.Stop();
 
-            NonBlockingConsole.Flush();
+            var flush = new Regex("^-{1,2}f(lush)$",
+              RegexOptions.Compiled | RegexOptions.IgnoreCase |
+              RegexOptions.Singleline | RegexOptions.CultureInvariant);
+            if (args.Any(s => flush.IsMatch(s)))
+            {
+                NonBlockingConsole.Flush();
+            }
 
             Console.WriteLine("Solved " + problem.GetType().Name + " " + DateTime.Now);
             Console.WriteLine();
