@@ -34,6 +34,12 @@ namespace Euler
                     more = fullGenerator.MoveNext();
                 }
 
+                if (fullGenerator.Current != p)
+                {
+                    sequentials--;
+                    Console.Write("=");
+                }
+
                 double ratio = (double)sequentials / all;
                 Console.WriteLine(columns, p, sequentials, fullGenerator.Current, all, ratio);
 
@@ -41,8 +47,6 @@ namespace Euler
                 {
                     return new object();
                 }
-
-                Debug.Assert(lastP == 0 || erat.Primes.Contains(lastP));
 
                 lastP = p;
             }
