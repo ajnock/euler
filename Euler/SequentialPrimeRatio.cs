@@ -10,8 +10,8 @@ namespace Euler
 {
     class SequentialPrimeRatio : Problem
     {
-        const string columns = "|{0}|\t\t|{1}|\t|{2}|\t|{3}|\t|{4:P}|";
-        const string header = "{0}\t{1}\t{2}\t{3}\t{4}";
+        const string columns = "{0}  {1}  {2}  {3}  {4:P}  {5}";
+        const string header = "|{0}|\t|{1}|\t|{2}|\t|{3}|\t|{4}|\t|{5}|";
         public override object Solve()
         {
             var sequentialGenerator = new SequentialPrimeGenerator();
@@ -21,7 +21,7 @@ namespace Euler
             var sequentials = 0;
             var all = 0;
 
-            Console.WriteLine(header, "Sequential", "Total", "All ", "Total", "Ratio");
+            Console.WriteLine(header, "Sequential", "Total", "All", "Total", "Ratio", "Primality");
 
             long lastP = 0;
             foreach (var p in sequentialGenerator.Sieve())
@@ -34,14 +34,19 @@ namespace Euler
                     more = fullGenerator.MoveNext();
                 }
 
+                string format;
                 if (fullGenerator.Current != p)
                 {
                     sequentials--;
-                    Console.Write("=");
+                    format = "composite";
+                }
+                else
+                {
+                    format = "prime";
                 }
 
                 double ratio = (double)sequentials / all;
-                Console.WriteLine(columns, p, sequentials, fullGenerator.Current, all, ratio);
+                Console.WriteLine(columns, p, sequentials, fullGenerator.Current, all, ratio, format);
 
                 if (!more)
                 {

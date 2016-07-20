@@ -11,12 +11,19 @@ namespace Ulam
     {
         static void Main(string[] args)
         {
+            if (args.Length != 2)
+            {
+                throw new ArgumentException("Ulam.exe 100 ./ulam100x100.png");
+            }
+
             int k = int.Parse(args[0]);
 
             var ulam = new UlamSpiral(k);
 
-            ulam.Generate();
-            ulam.Save(args[1]);
+            //ulam.Generate();
+            //ulam.Save(args[1]);
+
+            ulam.GenerateAndSave(args[1]);
         }
     }
 }
