@@ -49,6 +49,7 @@
     <Compile Include="Euler.cs" />
     <Compile Include="Problem.cs" />
     <Compile Include="Problem10.cs" />
+    <Compile Include="Problem104.cs" />
     <Compile Include="Problem111.cs" />
     <Compile Include="Problem118.cs" />
     <Compile Include="Problem134.cs" />

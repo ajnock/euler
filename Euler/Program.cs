@@ -25,7 +25,8 @@ namespace Euler
             { 118, new Problem118() },
             { 28, new Promblem28() },
             { 154, new Problem154() },
-            { 0, new SequentialPrimeRatio()}
+            { 0, new SequentialPrimeRatio() },
+            { 104, new Problem104() }
         };
         static int Main(string[] args)
         {
