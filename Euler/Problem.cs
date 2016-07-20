@@ -7,7 +7,7 @@ namespace Euler
 {
     public abstract class Problem
     {
-        const long elevenDigits = 100000000000;
+        protected const long elevenDigits = 100000000000;
 
         public abstract object Solve();
 
