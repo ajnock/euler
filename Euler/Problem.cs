@@ -7,7 +7,7 @@ namespace Euler
 {
     public abstract class Problem
     {
-        protected const long elevenDigits = 100000000000;
+        protected const long tenDigits = 1000000000;
 
         public abstract object Solve();
 
@@ -58,7 +58,7 @@ namespace Euler
 
         public static bool IsPandigitialLeft(long p)
         {
-            if (p < elevenDigits)
+            if (p < tenDigits)
             {
                 return false;
             }
@@ -70,7 +70,27 @@ namespace Euler
 
         public static bool IsPandigitialRight(long p)
         {
-            var leastSignificant = p % elevenDigits;
+            var leastSignificant = p % tenDigits;
+            string str = leastSignificant.ToString();
+
+            return IsPandigital(str);
+        }
+
+        public static bool IsPandigitialLeft(ulong p)
+        {
+            if (p < tenDigits)
+            {
+                return false;
+            }
+
+            string str = p.ToString().Substring(0, 10);
+
+            return IsPandigital(str);
+        }
+
+        public static bool IsPandigitialRight(ulong p)
+        {
+            var leastSignificant = p % tenDigits;
             string str = leastSignificant.ToString();
 
             return IsPandigital(str);
@@ -79,7 +99,7 @@ namespace Euler
         public static IEnumerable<long> GetPandigitials()
         {
             var queue = new BlockingCollection<long>();
-            Parallel.For(123456789, elevenDigits, new ParallelOptions(), (p) =>
+            Parallel.For(123456789, tenDigits, new ParallelOptions(), (p) =>
             {
                 if (IsPandigital(p.ToString()))
                 {
