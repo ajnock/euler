@@ -20,37 +20,43 @@ namespace Euler
     {
         public override object Solve()
         {
+            var set = new HashSet<long>();
             long i = 1;
             long j = 1;
-            long count = 2;
-            long tmp;
 
-            while (true)
+            long n = 2;
+            while (n <= 15e8 + 1000)
             {
-                bool left = IsPandigitialLeft(j);
-                bool right = IsPandigitialRight(j);
+                //bool left = IsPandigitialLeft(j);
+                //bool right = IsPandigitialRight(j);
 
-                if (left)
+                //if (left)
+                //{
+                //    Console.WriteLine("{0} {1}", n, j);
+                //}
+                //if (right)
+                //{
+                //    Console.WriteLine("{0} {1}", n, j);
+                //}
+                //if (right && left && j.ToString().Length >= 20)
+                //{
+                //    return n;
+                //}
+
+                if (IsPandigitialRight(j))
                 {
-                    Console.WriteLine("{0} {1}", count, j);
-                }
-                if (right)
-                {
-                    Console.WriteLine("{0} {1}", count, j);
-                }
-                if (right && left && j.ToString().Length >= 20)
-                {
-                    return count;
+                    var shrt = j % tenDigits;
+                    set.Add(shrt);
+                    Console.WriteLine("{0} {1}", shrt, n);
                 }
 
-                tmp = j;
-                j += i;
+                long tmp = j;
+                j = (j + i) % tenDigits;
                 i = tmp;
-
-                count++;
+                n++;
             }
 
-            return count;
+            return string.Format("{0} {1}", set.Count(), set.Max());
         }
     }
 }
