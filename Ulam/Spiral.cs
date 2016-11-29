@@ -19,9 +19,8 @@ namespace Ulam
         Prime = 0x11
     }
 
-    public abstract class Spiral
-    {
-        /// <summary>
+    public abstract class Spiral : ISpiral
+    {        /// <summary>
         /// Max value of the spiral
         /// </summary>
         public readonly int Max;
@@ -30,6 +29,7 @@ namespace Ulam
         /// Square root of <see cref="Max"/>
         /// </summary>
         public readonly int Root;
+
 
         protected abstract Color SetPixelColor(int x, int y, SquareStatus status);
 
@@ -46,7 +46,7 @@ namespace Ulam
             Max = Root * Root;
             _map = new SquareStatus[root, root];
         }
-        
+
         /// <summary>
         /// Save the Spiral to disk as a bitmap
         /// </summary>
@@ -129,14 +129,14 @@ namespace Ulam
                 bitmap.Save(file, ImageFormat.Png);
             }
         }
-  
+
         /// <summary>
         /// True if the space on the spiral has not been marked.
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        private bool IsEmpty(int x, int y)
+        protected bool IsEmpty(int x, int y)
         {
             return _map[x, y] == SquareStatus.Empty;
         }
