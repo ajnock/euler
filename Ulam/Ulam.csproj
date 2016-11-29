@@ -49,7 +49,7 @@
     <Compile Include="ISpiral.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RandomAccessUlam.cs" />
+    <Compile Include="MongoSpiralMapper.cs" />
     <Compile Include="Spiral.cs" />
     <Compile Include="UlamSpiral.cs" />
   </ItemGroup>

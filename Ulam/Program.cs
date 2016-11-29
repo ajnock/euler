@@ -18,7 +18,7 @@ namespace Ulam
 
             int k = int.Parse(args[0]);
 
-            ISpiral ulam = new UlamSpiral(k);
+            ISpiral ulam = new MongoSpiralMapper(k);
 
             //ulam.Generate();
             //ulam.Save(args[1]);
