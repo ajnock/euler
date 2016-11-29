@@ -54,6 +54,7 @@ namespace Euler
                 Multiple += Prime;
             }
         }
+
         public IEnumerable<long> Sieve2(long max = long.MaxValue)
         {
             var heads = new List<Head>();
@@ -124,27 +125,24 @@ namespace Euler
             _maxSieved = max;
         }
 
-        private Task Produce(BlockingCollection<long> queue, long max, long k)
+        private async Task Produce(BlockingCollection<long> queue, long max, long k)
         {
-            return Task.Run(() =>
-             {
-                 long root = 2L * k + 1L;
-                 long limit = Math.Min(root * root, max);
-                 long to = (limit + 1L) / 2L;
-                 long from = (_maxSieved + 1L) / 2L;
+            long root = 2L * k + 1L;
+            long limit = Math.Min(root * root, max);
+            long to = (limit + 1L) / 2L;
+            long from = (_maxSieved + 1L) / 2L;
 
-                 Parallel.For(from, to, i =>
-                 {
-                     long p = 2L * i + 1L;
-                     if (IsPrime(p))
-                     {
-                         queue.Add(p);
-                     }
-                 });
+            Parallel.For(from, to, i =>
+            {
+                long p = 2L * i + 1L;
+                if (IsPrime(p))
+                {
+                    queue.Add(p);
+                }
+            });
 
-                 _maxSieved = limit;
-                 queue.CompleteAdding();
-             });
+            _maxSieved = limit;
+            queue.CompleteAdding();
         }
 
         /// <summary>
@@ -166,20 +164,19 @@ namespace Euler
             }
 
             long k = 1L;
-            var queue = new BlockingCollection<long>();
-            queue.CompleteAdding();
-            var nextQueue = new BlockingCollection<long>();
-
             Task producer = null;
+
             while (_maxSieved < max)
             {
                 k++;
-                producer = Produce(queue, max, k);
-
-                foreach (var prime in queue.GetConsumingEnumerable())
+                var queue = new BlockingCollection<long>();
+                using (producer = Produce(queue, max, k))
                 {
-                    _primes.Add(prime);
-                    yield return prime;
+                    foreach (var prime in queue.GetConsumingEnumerable())
+                    {
+                        _primes.Add(prime);
+                        yield return prime;
+                    }
                 }
             }
         }
@@ -207,19 +204,20 @@ namespace Euler
             {
                 var queue = new BlockingCollection<long>();
                 k++;
-                Produce(queue, max, k);
-
-                var sortedSet = new SortedList<long, object>();
-                foreach (var prime in queue.GetConsumingEnumerable())
+                using (var producer = Produce(queue, max, k))
                 {
-                    sortedSet.Add(prime, null);
-                }
+                    var sortedSet = new SortedList<long, object>();
+                    foreach (var prime in queue.GetConsumingEnumerable())
+                    {
+                        sortedSet.Add(prime, null);
+                    }
 
-                foreach (var p in sortedSet)
-                {
-                    var prime = p.Key;
-                    _primes.Add(prime);
-                    yield return prime;
+                    foreach (var p in sortedSet)
+                    {
+                        var prime = p.Key;
+                        _primes.Add(prime);
+                        yield return prime;
+                    }
                 }
             }
         }

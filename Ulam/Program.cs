@@ -18,7 +18,7 @@ namespace Ulam
 
             int k = int.Parse(args[0]);
 
-            var ulam = new UlamSpiral(k);
+            var ulam = new RandomAccessUlamSpiral(k);
 
             //ulam.Generate();
             //ulam.Save(args[1]);

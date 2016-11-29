@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EulerMath;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,43 +21,18 @@ namespace Euler
     {
         public override object Solve()
         {
-            var set = new HashSet<long>();
-            long i = 1;
-            long j = 1;
-
-            long n = 2;
-            while (n <= 15e8 + 1000)
+            foreach (var p in GetPandigitials())
             {
-                //bool left = IsPandigitialLeft(j);
-                //bool right = IsPandigitialRight(j);
-
-                //if (left)
-                //{
-                //    Console.WriteLine("{0} {1}", n, j);
-                //}
-                //if (right)
-                //{
-                //    Console.WriteLine("{0} {1}", n, j);
-                //}
-                //if (right && left && j.ToString().Length >= 20)
-                //{
-                //    return n;
-                //}
-
-                if (IsPandigitialRight(j))
+                foreach (var q in GetPandigitials())
                 {
-                    var shrt = j % tenDigits;
-                    set.Add(shrt);
-                    Console.WriteLine("{0} {1}", shrt, n);
+                    if (Fibonacci.IsFibonacci(p + q))
+                    {
+                        NonBlockingConsole.WriteLine(p);
+                    }
                 }
-
-                long tmp = j;
-                j = (j + i) % tenDigits;
-                i = tmp;
-                n++;
             }
 
-            return string.Format("{0} {1}", set.Count(), set.Max());
+            return new object();
         }
     }
 }

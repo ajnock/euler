@@ -96,7 +96,7 @@ namespace Euler
             return IsPandigital(str);
         }
 
-        public static IEnumerable<long> GetPandigitials()
+        public static IEnumerable<long> GetRandomPandigitials()
         {
             var queue = new BlockingCollection<long>();
             Parallel.For(123456789, tenDigits, new ParallelOptions(), (p) =>
@@ -108,6 +108,32 @@ namespace Euler
             });
 
             return queue.GetConsumingEnumerable();
+        }
+
+        public static IEnumerable<string> GetPandigitials()
+        {
+            return Recurse(string.Empty, "987654321");
+        }
+
+        private static IEnumerable<string> Recurse(string number, string whatsLeft)
+        {
+            if (whatsLeft == "")
+            {
+                yield return number;
+            }
+            else
+            {
+                for (int i = 0; i < whatsLeft.Length; i++)
+                {
+                    number += whatsLeft[i];
+                    whatsLeft = whatsLeft.Remove(i, 1);
+                    var set = Recurse(number, whatsLeft);
+                    foreach (var solution in set)
+                    {
+                        yield return solution;
+                    }
+                }
+            }
         }
     }
 }

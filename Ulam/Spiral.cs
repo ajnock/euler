@@ -46,9 +46,7 @@ namespace Ulam
             Max = Root * Root;
             _map = new SquareStatus[root, root];
         }
-
-
-
+        
         /// <summary>
         /// Save the Spiral to disk as a bitmap
         /// </summary>
@@ -131,6 +129,7 @@ namespace Ulam
                 bitmap.Save(file, ImageFormat.Png);
             }
         }
+  
         /// <summary>
         /// True if the space on the spiral has not been marked.
         /// </summary>

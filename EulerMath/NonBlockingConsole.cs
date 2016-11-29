@@ -79,7 +79,7 @@ namespace Euler
                 }
                 catch (AggregateException)
                 {
-                    Console.WriteLine("Flushed");
+                    //Console.WriteLine("Flushed");
                 }
                 finally
                 {

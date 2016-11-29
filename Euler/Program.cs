@@ -35,20 +35,24 @@ namespace Euler
 
             if (args.Length < 1)
             {
-                //Console.WriteLine("Enter a problem number { " + string.Join(", ", Problems.Keys) + " }");
-                //return -1;
-
                 var e = new Eratosthenes();
-                foreach (var p in e.OptimizedSieveSorted())
+
+                //var count = 0;
+                //var start = DateTime.Now;
+
+                foreach (var p in e.OptimizedSieve())
                 {
+                    //count++;
+                    //var delta = (DateTime.Now - start).TotalMilliseconds;
+                    //var rate = (double)count / delta;
+                    //NonBlockingConsole.WriteLine(p + "\t\t" + rate);
+
                     NonBlockingConsole.WriteLine(p);
                 }
 
                 NonBlockingConsole.Flush();
 
-                return -1;
-
-                //problem = Problems.Last().Value;
+                return 0;
             }
             else if (!int.TryParse(args[0], out number) || !Problems.TryGetValue(number, out problem))
             {

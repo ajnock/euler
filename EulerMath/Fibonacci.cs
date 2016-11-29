@@ -46,5 +46,10 @@ namespace EulerMath
                 yield return f2;
             }
         }
+
+        public static bool IsFibonacci(string p)
+        {
+            return IsFibonacci(long.Parse(p));
+        }
     }
 }
