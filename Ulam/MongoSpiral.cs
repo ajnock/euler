@@ -14,7 +14,6 @@ namespace Ulam
 {
     public class MongoSpiral : ISpiral
     {
-
         private readonly ulong _max;
         private readonly IMongoCollection<Entry> _entries;
 
