@@ -20,10 +20,14 @@ namespace Ulam
 
             ISpiral ulam = new MongoSpiral(k);
 
-            //ulam.Generate();
-            //ulam.Save(args[1]);
-
-            ulam.GenerateAndSave(args[1]).Wait();
+            try
+            {
+                ulam.GenerateAndSave(args[1]).Wait();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
     }
 }
