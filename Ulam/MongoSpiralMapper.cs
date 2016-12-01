@@ -53,7 +53,7 @@ namespace Ulam
             return _map[x, y] == SquareStatus.Empty;
         }
 
-        public void GenerateAndSave(string file)
+        public async Task GenerateAndSave(string file)
         {
             int n = Root;
             int i = 1;

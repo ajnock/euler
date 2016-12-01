@@ -43,11 +43,11 @@ namespace Ulam
 
             base.Generate();
         }
-        public override void GenerateAndSave(string file)
+        public override async Task GenerateAndSave(string file)
         {
             _primes.MoveNext();
 
-            base.GenerateAndSave(file);
+            await base.GenerateAndSave(file);
         }
 
         protected override Color SetPixelColor(int x, int y, SquareStatus status)

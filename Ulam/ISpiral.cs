@@ -8,6 +8,6 @@ namespace Ulam
 {
     interface ISpiral
     {
-        void GenerateAndSave(string file);
+        Task GenerateAndSave(string file);
     }
 }

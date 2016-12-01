@@ -16,14 +16,14 @@ namespace Ulam
                 throw new ArgumentException("Ulam.exe 100 ./ulam100x100.png");
             }
 
-            int k = int.Parse(args[0]);
+            var k = ulong.Parse(args[0]);
 
-            ISpiral ulam = new MongoSpiralMapper(k);
+            ISpiral ulam = new MongoSpiral(k);
 
             //ulam.Generate();
             //ulam.Save(args[1]);
 
-            ulam.GenerateAndSave(args[1]);
+            ulam.GenerateAndSave(args[1]).Wait();
         }
     }
 }

@@ -69,7 +69,7 @@ namespace Ulam
             }
         }
 
-        public virtual void GenerateAndSave(string file)
+        public virtual async Task GenerateAndSave(string file)
         {
             using (var bitmap = new Bitmap(Root, Root))
             {
