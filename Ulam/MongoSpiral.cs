@@ -9,20 +9,23 @@ using System.Text;
 using System.Threading.Tasks;
 using EulerMath;
 using System.Threading;
+using System.Collections.Concurrent;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace Ulam
 {
     public class MongoSpiral : ISpiral
     {
+        private static readonly long OneAsLong = ((ulong)1).ToLong();
         private readonly ulong _max;
         private readonly IMongoCollection<Entry> _entries;
+        private readonly MongoClientSettings _clientSettings = new MongoClientSettings();
 
         public MongoSpiral(ulong max)
         {
             _max = max;
-            var client = new MongoClient();
+            var client = new MongoClient(_clientSettings);
             _entries = client.GetDatabase("Ulam").GetCollection<Entry>("map");
-
         }
 
         public async Task GenerateAndSave(string file)
@@ -32,90 +35,146 @@ namespace Ulam
                 ulong p = 1;
                 long x = 0;
                 long y = 0;
-                long sideLength = 0;
+                long sideLength = 1;
 
-                var sort = new JsonSortDefinition<Entry>("{ \"Location.Y\" : 1, \"Location.X\" : 1 }");
-                var cursor = await _entries.FindAsync(FilterDefinition<Entry>.Empty, new FindOptions<Entry, Entry>()
+                var options = new FindOptions<Entry, Entry>()
                 {
-                    Sort = sort,
+                    Sort = new JsonSortDefinition<Entry>("{ LongValue : -1 }"),
                     Limit = 1
-                });
-                var cornerDoc = await cursor.FirstOrDefaultAsync();
+                };
+                using (var cursor = await _entries.FindAsync(FilterDefinition<Entry>.Empty, options))
+                {
+                    var largestNumber = await cursor.FirstOrDefaultAsync();
 
-                if (cornerDoc == null)
-                {
-                    // 1 is special
-                    var doc = new Entry(p, x, y);
-                    await _entries.InsertOneAsync(doc);
-                }
-                else
-                {
-                    if (cornerDoc.Value >= _max)
+                    if (largestNumber == null || largestNumber.Value < 9)
                     {
-                        Console.WriteLine("Nothing to generate");
-                        return;
+                        // clear out the collection. This is less than 9 documents
+                        var result = await _entries.DeleteManyAsync(FilterDefinition<Entry>.Empty);
+                        Console.WriteLine("Deleted " + result.DeletedCount + " documents");
+
+                        // seed up to 9
+                        var seeds = new Entry[] {
+                            new Entry(1, 0, 0, false),
+                            new Entry(2, 1, 0, true),
+                            new Entry(3, 1, 1, true),
+                            new Entry(4, 0, 1, false),
+                            new Entry(5, -1, 1, true),
+                            new Entry(6, -1, 0, false),
+                            new Entry(7, -1, -1, true),
+                            new Entry(8, 0, -1, false),
+                            new Entry(9, 1, -1, false),
+                        };
+
+                        _entries.InsertMany(seeds);
+
+                        p = 9;
+                        x = 1;
+                        y = -1;
+                        sideLength = 3;
                     }
+                    else
+                    {
+                        long root = (long)Math.Floor(Math.Sqrt(largestNumber.Value));
+                        if (root % 2 == 0)
+                        {
+                            root--;
+                        }
 
-                    p = cornerDoc.Value;
-                    x = y = (long)Math.Min(cornerDoc.Location.X, cornerDoc.Location.Y);
+                        p = (ulong)root * (ulong)root;
 
-                    // calculate the current side length
-                    long root = (long)Math.Floor(Math.Sqrt(p) + 1);
-                    sideLength = -2 * x;
+                        var count = await _entries.CountAsync(FilterDefinition<Entry>.Empty);
 
-                    // remove excess to get ourselves to an easy starting point so we can jump right into the algorithm
-                    var result = _entries.DeleteMany(new JsonFilterDefinition<Entry>("{ LongValue : { $gt : " + cornerDoc.LongValue + " } }"));
-                    Console.WriteLine("Deleted " + result.DeletedCount + " documents");
+                        long deleted = 0;
+                        while ((ulong)count != p)
+                        {
+                            root -= 2;
+                            p = (ulong)root * (ulong)root;
+
+                            var result = await _entries.DeleteManyAsync(new JsonFilterDefinition<Entry>("{ LongValue : { $gt : " + p.ToLong() + " } }"));
+                            deleted += result.DeletedCount;
+                            Console.WriteLine("  -" + result.DeletedCount + " documents");
+
+                            count = await _entries.CountAsync(FilterDefinition<Entry>.Empty);
+                        }
+
+                        NonBlockingConsole.WriteLine("Deleted " + deleted + " total documents");
+
+                        x = root;
+                        y = -x;
+                        sideLength = 2 * x;
+                    }
                 }
 
                 while (p <= _max)
                 {
-                    sideLength++;
-                    for (long i = 0; i < sideLength; i++)
+                    var queue = new BlockingCollection<Task<Entry>>(_clientSettings.MaxConnectionPoolSize - 1);
+                    NonBlockingConsole.WriteLine("Side Length: " + sideLength);
+
+                    var consumer = Task.Run(() =>
+                    {
+                        while (!queue.IsCompleted)
+                        {
+                            Task<Entry> task;
+                            while (queue.TryTake(out task))
+                            {
+                                var entry = task.Result;
+
+                                if (entry.IsPrime)
+                                {
+                                    NonBlockingConsole.WriteLine(entry.Value);
+                                }
+
+                                _entries.InsertOne(entry);
+                            }
+                        }
+                    });
+                    var producer = Task.Run(() =>
                     {
                         x++;
                         p++;
+                        queue.Add(NewEntry(p, x, y));
 
-                        var doc = await NewEntry(p, x, y);
-                        await _entries.InsertOneAsync(doc);
-                    }
+                        for (long i = 0; i < sideLength; i++)
+                        {
+                            y++;
+                            p++;
+                            queue.Add(NewEntry(p, x, y));
+                        }
 
-                    for (long i = 0; i < sideLength; i++)
-                    {
-                        y++;
-                        p++;
+                        sideLength++;
+                        for (long i = 0; i < sideLength; i++)
+                        {
+                            x--;
+                            p++;
 
-                        var doc = await NewEntry(p, x, y);
-                        await _entries.InsertOneAsync(doc);
-                    }
+                            queue.Add(NewEntry(p, x, y));
+                        }
 
-                    sideLength++;
-                    for (long i = 0; i < sideLength; i++)
-                    {
-                        // print the even square
-                        //if (i == sideLength - 1)
-                        //{
-                        //    NonBlockingConsole.WriteLine(p);
-                        //}
+                        for (long i = 0; i < sideLength; i++)
+                        {
+                            y--;
+                            p++;
 
-                        x--;
-                        p++;
+                            queue.Add(NewEntry(p, x, y));
+                        }
 
-                        var doc = await NewEntry(p, x, y);
-                        await _entries.InsertOneAsync(doc);
-                    }
+                        for (long i = 0; i < sideLength; i++)
+                        {
+                            x++;
+                            p++;
 
-                    for (long i = 0; i < sideLength; i++)
-                    {
-                        y--;
-                        p++;
+                            queue.Add(NewEntry(p, x, y));
+                        }
 
-                        var doc = await NewEntry(p, x, y);
-                        await _entries.InsertOneAsync(doc);
-                    }
+                        sideLength++;
+
+                        queue.CompleteAdding();
+                    });
+
+                    await Task.WhenAll(producer, consumer);
                 }
             }
-            catch (OverflowException ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex);
             }
@@ -132,34 +191,30 @@ namespace Ulam
 
             ulong third = (ulong)(p / 3) + 1;
             long value = third.ToLong();
-            var cursor = await _entries.FindAsync(new JsonFilterDefinition<Entry>("{ $and : [ { IsPrime : true }, { LongValue : { $lte : " + value + " } } ] }"));
-
-            using (var source = new CancellationTokenSource())
+            using (var cursor = await _entries.FindAsync(new JsonFilterDefinition<Entry>("{ $and : [ { IsPrime : true }, { LongValue : { $gt : " + OneAsLong + " } }, { LongValue : { $lte : " + value + " } } ] }")))
             {
-                var token = source.Token;
-                var isPrime = true;
-
-                try
+                using (var source = new CancellationTokenSource())
                 {
-                    await cursor.ForEachAsync((e) =>
-                                         {
-                                             if (p % e.Value == 0)
+                    var token = source.Token;
+                    var isPrime = true;
+
+                    try
+                    {
+                        await cursor.ForEachAsync((e) =>
                                              {
-                                                 isPrime = false;
-                                                 source.Cancel();
-                                             }
-                                         }, source.Token);
-                }
-                catch (OperationCanceledException)
-                {
-                    isPrime = false;
-                }
+                                                 if (p % e.Value == 0)
+                                                 {
+                                                     isPrime = false;
+                                                     source.Cancel();
+                                                 }
+                                             }, source.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        isPrime = false;
+                    }
 
-                entry.IsPrime = isPrime;
-
-                if (isPrime)
-                {
-                    NonBlockingConsole.WriteLine(p);
+                    entry.IsPrime = isPrime;
                 }
             }
 
@@ -168,14 +223,17 @@ namespace Ulam
 
         public class Entry
         {
-            public ObjectId _id { get; set; }
+            [BsonId]
+            public ObjectId Id { get; set; }
 
+            [BsonIgnore]
             internal ulong Value { get; private set; }
 
             public Entry()
             {
             }
-            public Entry(ulong p, long x, long y)
+
+            public Entry(ulong p, long x, long y, bool isPrime = false)
             {
                 Location = new Cordinate()
                 {
@@ -183,29 +241,36 @@ namespace Ulam
                     Y = y
                 };
                 Value = p;
-                StringValue = p.ToString();
-                _longValue = p.ToLong();
-                IsPrime = false;
+                IsPrime = isPrime;
             }
 
-            public string StringValue { get; set; }
+            [BsonElement]
+            public string StringValue
+            {
+                get
+                {
+                    return Value.ToString();
+                }
+            }
 
-            private long _longValue;
+            [BsonElement]
             public long LongValue
             {
                 get
                 {
-                    return _longValue;
+                    return Value.ToLong();
                 }
                 set
                 {
-                    _longValue = value;
                     Value = value.ToULong();
                 }
             }
 
+            [BsonElement]
             public Cordinate Location { get; set; }
 
+            [BsonElement]
+            [BsonIgnoreIfDefault]
             public bool IsPrime { get; set; }
         }
 
