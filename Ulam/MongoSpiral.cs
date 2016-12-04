@@ -17,12 +17,12 @@ namespace Ulam
     public class MongoSpiral : ISpiral
     {
         private static readonly long OneAsLong = ((ulong)1).ToLong();
-        private readonly ulong _max;
+        private readonly long _max;
         private readonly IMongoCollection<UlamElement> _map;
         private readonly IMongoCollection<UlamElement> _primes;
         private readonly MongoClientSettings _clientSettings;
 
-        public MongoSpiral(ulong max)
+        public MongoSpiral(long max)
         {
             _max = max;
             _clientSettings = new MongoClientSettings()
@@ -37,7 +37,7 @@ namespace Ulam
 
         public async Task GenerateAndSave(string file = null)
         {
-            ulong p = 1;
+            long p = 1;
             long x = 0;
             long y = 0;
             long sideLength = 1;
@@ -45,7 +45,7 @@ namespace Ulam
             // build cache
             var primesOptions = new FindOptions<UlamElement, UlamElement>()
             {
-                Sort = new JsonSortDefinition<UlamElement>("{ LongValue : -1 }"),
+                Sort = new JsonSortDefinition<UlamElement>("{ Value : -1 }"),
                 Limit = int.MaxValue
             };
 
@@ -53,7 +53,7 @@ namespace Ulam
             UlamElement largestNumber;
             var options = new FindOptions<UlamElement, UlamElement>()
             {
-                Sort = new JsonSortDefinition<UlamElement>("{ LongValue : -1 }"),
+                Sort = new JsonSortDefinition<UlamElement>("{ Value : -1 }"),
                 Limit = 1
             };
             using (var cursor = await _map.FindAsync(FilterDefinition<UlamElement>.Empty, options))
@@ -61,7 +61,7 @@ namespace Ulam
                 largestNumber = await cursor.FirstOrDefaultAsync();
             }
 
-            if (largestNumber.Value < 9)
+            if (largestNumber == null || largestNumber.Value <= 9)
             {
                 // clear out the collection. This is less than 9 documents
                 var result1 = _map.DeleteManyAsync(FilterDefinition<UlamElement>.Empty);
@@ -88,19 +88,15 @@ namespace Ulam
                             new UlamElement(9, 1, -1, false),
                         };
 
-                var inserts = new List<Task>();
-                foreach (var seed in seeds.Where(s => s.IsPrime))
-                {
-                    inserts.Add(_map.InsertOneAsync(seed));
-                    inserts.Add(_primes.InsertOneAsync(seed));
-                }
+                var t1 = _map.InsertManyAsync(seeds);
+                var t2 = _primes.InsertManyAsync(seeds.Where(s => s.IsPrime));
 
                 p = 9;
                 x = 1;
                 y = -1;
                 sideLength = 3;
 
-                await Task.WhenAll(inserts);
+                await Task.WhenAll(t1, t2);
             }
             else
             {
@@ -117,29 +113,18 @@ namespace Ulam
                         root--;
                     }
 
-                    p = (ulong)root * (ulong)root;
+                    p = root * root;
 
                     long deleted = 0;
-                    var count = _map.Count(FilterDefinition<UlamElement>.Empty);
+                    var result1 = _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ Value : { $gt : " + p + " } }"));
+                    var result2 = _primes.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ Value : { $gt : " + p + " } }"));
 
-                    while ((ulong)count != p)
-                    {
-                        root -= 2;
-                        p = (ulong)root * (ulong)root;
+                    await Task.WhenAll(result1, result2);
 
-                        var result1 = _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ LongValue : { $gt : " + p.ToLong() + " } }"));
-                        var result2 = _primes.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ LongValue : { $gt : " + p.ToLong() + " } }"));
-
-                        await Task.WhenAll(result1, result2);
-
-                        deleted += result1.Result.DeletedCount;
-                        deleted += result2.Result.DeletedCount;
-                        NonBlockingConsole.WriteLine("  -" + result1.Result.DeletedCount + " numbers");
-                        NonBlockingConsole.WriteLine("  -" + result2.Result.DeletedCount + " primes");
-
-                        count = _map.Count(FilterDefinition<UlamElement>.Empty);
-                    }
-
+                    deleted += result1.Result.DeletedCount;
+                    deleted += result2.Result.DeletedCount;
+                    NonBlockingConsole.WriteLine("  -" + result1.Result.DeletedCount + " numbers");
+                    NonBlockingConsole.WriteLine("  -" + result2.Result.DeletedCount + " primes");
                     NonBlockingConsole.WriteLine("Deleted " + deleted + " total documents");
 
                     x = root;

@@ -21,14 +21,11 @@ namespace Ulam
         [BsonId]
         public ObjectId Id { get; set; }
 
-        [BsonIgnore]
-        internal ulong Value { get; private set; }
-
         public UlamElement()
         {
         }
 
-        public UlamElement(ulong p, long x, long y, bool isPrime = false)
+        public UlamElement(long p, long x, long y, bool isPrime = false)
         {
             Location = new Cordinate()
             {
@@ -40,26 +37,7 @@ namespace Ulam
         }
 
         [BsonElement]
-        public string StringValue
-        {
-            get
-            {
-                return Value.ToString();
-            }
-        }
-
-        [BsonElement]
-        public long LongValue
-        {
-            get
-            {
-                return Value.ToLong();
-            }
-            set
-            {
-                Value = value.ToULong();
-            }
-        }
+        public long Value { get; set; }
 
         [BsonElement]
         public Cordinate Location { get; set; }
