@@ -37,6 +37,8 @@ namespace Ulam
         public async Task GenerateAndSave(string file = null)
         {
             long p = 1;
+            long root = (long)Math.Sqrt(p);
+            long lastP = p;
             long x = 0;
             long y = 0;
             long sideLength = 1;
@@ -84,13 +86,15 @@ namespace Ulam
                             new UlamElement(6, -1, 0, false),
                             new UlamElement(7, -1, -1, true),
                             new UlamElement(8, 0, -1, false),
-                            new UlamElement(9, 1, -1, false),
+                            new UlamElement(9,1,-1,false)
                         };
 
                 var t1 = _map.InsertManyAsync(seeds);
                 var t2 = _primes.InsertManyAsync(seeds.Where(s => s.IsPrime));
 
                 p = 9;
+                root = 3;
+                lastP = 1;
                 x = 1;
                 y = -1;
                 sideLength = 3;
@@ -101,18 +105,22 @@ namespace Ulam
             {
                 using (var cursor = await _map.FindAsync(FilterDefinition<UlamElement>.Empty, options))
                 {
-                    long root = (long)Math.Floor(Math.Sqrt(largestNumber.Value));
+                    root = (long)(Math.Floor(Math.Sqrt(largestNumber.Value)));
 
-                    // remove the last ring to be safe
-                    root--;
-
-                    // make it odd
+                    // remove the last ring to be safe 
                     if (root % 2 == 0)
                     {
-                        root--;
+                        root -= 3;
+                    }
+                    else
+                    {
+                        root -= 2;
                     }
 
                     p = root * root;
+                    x = root - 2;
+                    y = -x;
+                    sideLength = root;
 
                     long deleted = 0;
                     var result1 = _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ Value : { $gt : " + p + " } }"));
@@ -125,19 +133,22 @@ namespace Ulam
                     NonBlockingConsole.WriteLine("  -" + result1.Result.DeletedCount + " numbers");
                     NonBlockingConsole.WriteLine("  -" + result2.Result.DeletedCount + " primes");
                     NonBlockingConsole.WriteLine("Deleted " + deleted + " total documents");
-
-                    x = root;
-                    y = -x;
-                    sideLength = 2 * x;
                 }
             }
 
             while (p < _max)
             {
+                root += 2;
+                long min = p + 1;
+                long max = root * root;
+                long diff = max - min;
+
+                NonBlockingConsole.WriteLine();
+                NonBlockingConsole.WriteLine("                      " + " | Root".PadRight(root.ToString().Length) + " | Current".PadRight(min.ToString().Length) + " | Max".PadRight(max.ToString().Length) + " | Step Size".PadRight(diff.ToString().Length));
+                NonBlockingConsole.WriteLine(DateTime.Now.ToString("MM/dd/yy H:mm:ss.ffff") + " | " + root + " | " + min + " | " + max + " | " + diff);
+
                 var queue = new BlockingCollection<Task<UlamElement>>(_clientSettings.MaxConnectionPoolSize - 2);
                 var primes = new BlockingCollection<UlamElement>();
-
-                NonBlockingConsole.WriteLine("Side Length: " + sideLength);
 
                 var ulamConsumer = Task.Run(() =>
                 {
@@ -150,7 +161,7 @@ namespace Ulam
 
                             if (entry.IsPrime)
                             {
-                                //NonBlockingConsole.WriteLine(entry.Value);
+                                NonBlockingConsole.Write(".");
                                 primes.Add(entry);
                             }
 
@@ -159,8 +170,6 @@ namespace Ulam
                     }
 
                     primes.CompleteAdding();
-
-                    //NonBlockingConsole.WriteLine("Ulam Consumer");
                 });
 
                 var primesConsumer = Task.Run(() =>
@@ -169,8 +178,6 @@ namespace Ulam
                     {
                         _primes.InsertOne(prime);
                     }
-
-                    //NonBlockingConsole.WriteLine("Primes Consumer");
                 });
 
                 var producer = Task.Run(() =>
@@ -214,8 +221,6 @@ namespace Ulam
                     sideLength++;
 
                     queue.CompleteAdding();
-
-                    //NonBlockingConsole.WriteLine("Producer");
                 });
 
                 await Task.WhenAll(producer, ulamConsumer, primesConsumer);

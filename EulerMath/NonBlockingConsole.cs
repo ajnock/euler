@@ -7,7 +7,7 @@ namespace Euler
 {
     public static class NonBlockingConsole
     {
-        private static readonly BlockingCollection<object> queue = new BlockingCollection<object>();
+        private static readonly BlockingCollection<Tuple<object, bool>> queue = new BlockingCollection<Tuple<object, bool>>();
         private static readonly object flushMutex = new object();
         private static readonly ManualResetEvent flushingSignal = new ManualResetEvent(true);
         private static Worker worker;
@@ -21,10 +21,20 @@ namespace Euler
         /// Writes to the console in a non-blocking manner
         /// </summary>
         /// <param name="value"></param>
-        public static void WriteLine(object value)
+        public static void WriteLine(object value = null)
         {
             flushingSignal.WaitOne();
-            queue.Add(value);
+            queue.Add(new Tuple<object, bool>(value, true));
+        }
+
+        /// <summary>
+        /// Writes to the console in a non-blocking manner
+        /// </summary>
+        /// <param name="value"></param>
+        public static void Write(object value = null)
+        {
+            flushingSignal.WaitOne();
+            queue.Add(new Tuple<object, bool>(value, false));
         }
 
         /// <summary>
@@ -57,10 +67,18 @@ namespace Euler
                 {
                     while (!token.IsCancellationRequested)
                     {
-                        object obj;
-                        while (queue.TryTake(out obj))
+                        Tuple<object, bool> item;
+                        while (queue.TryTake(out item))
                         {
-                            Console.WriteLine(DateTime.Now.ToString("MM/dd/yy H:mm:ss.ffff") + ": " + obj);
+                            var obj = item.Item1;
+                            if (item.Item2)
+                            {
+                                Console.WriteLine(obj);
+                            }
+                            else
+                            {
+                                Console.Write(obj);
+                            }
                         }
                     }
 
