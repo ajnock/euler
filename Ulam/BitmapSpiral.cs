@@ -14,7 +14,6 @@ namespace Ulam
     /// </summary>
     public enum Direction
     {
-        Invalid = -1,
         Right, Up, Left, Down
     }
 
@@ -43,6 +42,7 @@ namespace Ulam
 
             base.Generate();
         }
+
         public override async Task GenerateAndSave(string file)
         {
             _primes.MoveNext();
