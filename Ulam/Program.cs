@@ -16,13 +16,33 @@ namespace Ulam
                 throw new ArgumentException("Ulam.exe 100 ./ulam100x100.png");
             }
 
-            var k = ulong.Parse(args[0]);
+            var k = ulong.Parse(args[1]);
 
-            ISpiral ulam = new MongoSpiral(k);
+            ISpiral ulam;
+
+            switch (args[0].ToLower())
+            {
+                case "image":
+                    int max = (int)Math.Min(int.MaxValue, k);
+                    ulam = new BitmapSpiral(max);
+                    break;
+                case "mongo":
+                    ulam = new MongoSpiral(k);
+                    break;
+                default:
+                    throw new ArgumentException("Ulam.exe (mongo|image) max [./ulam100x100.png]");
+            }
 
             try
             {
-                ulam.GenerateAndSave(args[1]).Wait();
+                if (args.Length >= 3)
+                {
+                    ulam.GenerateAndSave(args[2]).Wait();
+                }
+                else
+                {
+                    ulam.GenerateAndSave().Wait();
+                }
             }
             catch (Exception ex)
             {
