@@ -150,7 +150,7 @@ namespace Ulam
 
                             if (entry.IsPrime)
                             {
-                                NonBlockingConsole.WriteLine(entry.Value);
+                                //NonBlockingConsole.WriteLine(entry.Value);
                                 primes.Add(entry);
                             }
 
