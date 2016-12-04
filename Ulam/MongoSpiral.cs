@@ -261,7 +261,7 @@ namespace Ulam
             {
                 ulong third = (ulong)(p / 3) + 1;
                 long value = third.ToLong();
-                using (var cursor = await _primes.FindAsync(new JsonFilterDefinition<UlamElement>("{ $and : [ { LongValue : { $gt : " + OneAsLong + " } }, { LongValue : { $lte : " + value + " } } ] }")))
+                using (var cursor = await _primes.FindAsync(new JsonFilterDefinition<UlamElement>("{ LongValue : { $lte : " + value + " } }")))
                 {
                     using (var source = new CancellationTokenSource())
                     {
