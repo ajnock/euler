@@ -16,7 +16,6 @@ namespace Ulam
 {
     public class MongoSpiral : ISpiral
     {
-        private static readonly long OneAsLong = ((ulong)1).ToLong();
         private readonly long _max;
         private readonly IMongoCollection<UlamElement> _map;
         private readonly IMongoCollection<UlamElement> _primes;
@@ -223,7 +222,7 @@ namespace Ulam
             }
         }
 
-        private async Task<UlamElement> NewEntry(ulong p, long x, long y)
+        private async Task<UlamElement> NewEntry(long p, long x, long y)
         {
             var entry = new UlamElement(p, x, y);
 
@@ -244,9 +243,8 @@ namespace Ulam
             }
             else
             {
-                ulong third = (ulong)(p / 3) + 1;
-                long value = third.ToLong();
-                using (var cursor = await _primes.FindAsync(new JsonFilterDefinition<UlamElement>("{ LongValue : { $lte : " + value + " } }")))
+                long third = (p / 3) + 1;
+                using (var cursor = await _primes.FindAsync(new JsonFilterDefinition<UlamElement>("{ Value : { $lte : " + third + " } }")))
                 {
                     using (var source = new CancellationTokenSource())
                     {

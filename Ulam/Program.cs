@@ -16,7 +16,7 @@ namespace Ulam
                 throw new ArgumentException("Ulam.exe 100 ./ulam100x100.png");
             }
 
-            var k = ulong.Parse(args[1]);
+            var k = long.Parse(args[1]);
 
             ISpiral ulam;
 
