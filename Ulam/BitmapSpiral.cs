@@ -18,7 +18,7 @@ namespace Ulam
         Right, Up, Left, Down
     }
 
-    public class UlamSpiral : Spiral
+    public class BitmapSpiral : Spiral
     {
         /// <summary>
         /// Prime generator
@@ -27,10 +27,10 @@ namespace Ulam
         private readonly IEnumerator<long> _primes;
 
         /// <summary>
-        /// Create a new <see cref="UlamSpiral"/>. Each side will be of <paramref name="root"/> length.
+        /// Create a new <see cref="BitmapSpiral"/>. Each side will be of <paramref name="root"/> length.
         /// </summary>
         /// <param name="root">Square root of the max value</param>
-        public UlamSpiral(int root)
+        public BitmapSpiral(int root)
             : base(root)
         {
             _eratosthenes = new Eratosthenes();
