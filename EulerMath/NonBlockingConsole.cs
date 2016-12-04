@@ -60,7 +60,7 @@ namespace Euler
                         object obj;
                         while (queue.TryTake(out obj))
                         {
-                            Console.WriteLine(DateTime.Now.ToString("MM/dd/yy H:mm:ssffff") + ": " + obj);
+                            Console.WriteLine(DateTime.Now.ToString("MM/dd/yy H:mm:ss.ffff") + ": " + obj);
                         }
                     }
 
