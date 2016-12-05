@@ -19,7 +19,6 @@ namespace Ulam
     {
         private readonly long _max;
         private readonly IMongoCollection<UlamElement> _map;
-        private readonly IMongoCollection<UlamElement> _primes;
         private readonly MongoClientSettings _clientSettings;
 
         public MongoSpiral(long max)
@@ -32,25 +31,36 @@ namespace Ulam
             };
             var client = new MongoClient(_clientSettings);
             _map = client.GetDatabase("Ulam").GetCollection<UlamElement>("map");
-            _primes = client.GetDatabase("Ulam").GetCollection<UlamElement>("primes");
         }
 
         public async Task GenerateAndSave(string file = null)
         {
-            // clear out the collection. This is less than 9 documents
-            var result1 = _map.DeleteManyAsync(FilterDefinition<UlamElement>.Empty);
-            var result2 = _primes.DeleteManyAsync(FilterDefinition<UlamElement>.Empty);
+            var primesOptions = new FindOptions<UlamElement, UlamElement>()
+            {
+                Sort = new JsonSortDefinition<UlamElement>("{ Value : -1 }"),
+                Limit = int.MaxValue
+            };
 
-            await Task.WhenAll(result1, result2);
+            // find the largest number
+            UlamElement largestNumber;
+            var options = new FindOptions<UlamElement, UlamElement>()
+            {
+                Sort = new JsonSortDefinition<UlamElement>("{ Value : -1 }"),
+                Limit = 1
+            };
+            using (var cursor = await _map.FindAsync(FilterDefinition<UlamElement>.Empty, options))
+            {
+                largestNumber = await cursor.FirstOrDefaultAsync();
+            }
 
-            var deleted = result1.Result.DeletedCount;
-            deleted += result2.Result.DeletedCount;
-            NonBlockingConsole.WriteLine("  -" + result1.Result.DeletedCount + " numbers");
-            NonBlockingConsole.WriteLine("  -" + result2.Result.DeletedCount + " primes");
-            NonBlockingConsole.WriteLine("Deleted " + deleted + " total documents");
+            long initialRoot = 3;
+            long minK = (long)Math.Floor((initialRoot + 1) / 2d) + 1;
+            long maxK = (long)Math.Sqrt((double)_max) / 2;
 
-            // seed up to 9
-            var seeds = new UlamElement[] {
+            if (largestNumber == null || largestNumber.Value <= 9)
+            {
+                // seed up to 9
+                var seeds = new UlamElement[] {
                             new UlamElement(1, 0, 0, false),
                             new UlamElement(2, 1, 0, true),
                             new UlamElement(3, 1, 1, true),
@@ -62,14 +72,37 @@ namespace Ulam
                             new UlamElement(9,1,-1,false)
                         };
 
-            var t1 = _map.InsertManyAsync(seeds);
-            var t2 = _primes.InsertManyAsync(seeds.Where(s => s.IsPrime));
+                var insert = _map.InsertManyAsync(seeds);
 
-            long initialRoot = 3;
-            long minK = (long)Math.Floor((initialRoot + 1) / 2d) + 1;
-            long maxK = (long)Math.Sqrt((double)_max) / 2;
+                // clear out the collection. This is less than 9 documents
+                var result = await _map.DeleteManyAsync(FilterDefinition<UlamElement>.Empty);
+                NonBlockingConsole.WriteLine("Deleted " + result.DeletedCount + " documents");
 
-            await Task.WhenAll(t1, t2);
+                await insert;
+            }
+            else
+            {
+                using (var cursor = await _map.FindAsync(FilterDefinition<UlamElement>.Empty, options))
+                {
+                    long root = (long)(Math.Floor(Math.Sqrt(largestNumber.Value)));
+
+                    // remove the last ring to be safe 
+                    if (root % 2 == 0)
+                    {
+                        root--;
+                    }
+                    else
+                    {
+                        root -= 2;
+                    }
+
+                    long p = root * root;
+                    var result = await _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ Value : { $gt : " + p + " } }"));
+                    NonBlockingConsole.WriteLine("Deleted " + result.DeletedCount + " documents");
+
+                    minK = (root - 1) / 2;
+                }
+            }
 
             for (long k = minK; k <= maxK; k++)
             {
@@ -128,19 +161,19 @@ namespace Ulam
                         queue.CompleteAdding();
 
                         stopwatch.Stop();
-                        var message = "Time Stamp             " + " | "
+                        var message = "Time Stamp          " + " | "
                                     + "Root".PadRight(root.ToString().Length) + " | "
                                     + "Min".PadRight(min.ToString().Length) + " | "
                                     + "Max".PadRight(max.ToString().Length) + " | "
-                                    + "Step Size".PadRight(diff.ToString().Length) + " | "
-                                    + "Limit".PadRight(_max.ToString().Length) + " | "
+                                    + "Delta".PadRight(diff.ToString().Length) + " | "
+                                    + "To Go".PadRight(toGo.ToString().Length) + " | "
                                     + "Elapsed".PadRight(stopwatch.Elapsed.TotalMilliseconds.ToString().Length + 2)
-                                    + "\r\n" + DateTime.Now.ToString("MM/dd/yy H:mm:ss.ffff") + " | "
+                                    + "\r\n" + DateTime.Now.ToString("MM/dd/yy H:mm:ss.ff") + " | "
                                     + root.ToString().PadRight(4) + " | "
                                     + min.ToString().PadRight(3) + " | "
                                     + max.ToString().PadRight(3) + " | "
-                                    + diff.ToString().PadRight(9) + " | "
-                                    + _max.ToString().PadRight(5) + " | "
+                                    + diff.ToString().PadRight(5) + " | "
+                                    + toGo.ToString().PadRight(5) + " | "
                                     + stopwatch.Elapsed.TotalMilliseconds.ToString().PadRight(7) + "ms";
                         NonBlockingConsole.WriteLine(message);
                     });

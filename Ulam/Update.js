@@ -1,17 +1,36 @@
-var minPrime = 2;
-var prime = db.map.find({
-    $and: [
-    { IsPrime: true },
-    { Value: { $gt: minPrime } }
-    ]
-}).sort({ Value: 1 }).limit(1).toArray()[0];
+function getNextPrime(p) {
+    var obj = db.map.find({
+        $and: [
+        { IsPrime: true },
+        { Value: { $gt: p } }
+        ]
+    }).sort({ Value: 1 }).limit(1);
 
-db.map.updateMany({
-    $and: [
-    { IsPrime: true },
-    { Value: { $gt: prime.Value } },
-    { Value: { $mod: [prime.Value, 0] } }
-    ]
-}, { $set: { IsPrime: false } })
+    if (obj) {
+        return obj[0].Value;
+    } else {
+        return null;
+    }
+}
 
+// create the query index
+db.map.createIndex({ Value: 1 }, { unique: true });
+// create new index which will also help us in our queries
+db.map.createIndex({ IsPrime: -1, Value: 1 }, { unique: true });
+
+// start sieving at 3 because that's
+var prime = getNextPrime(2);
+while (prime != null && prime <= 9223372036854775807 / 3) {
+    print("Sieving " + prime)
+
+    db.map.updateMany({
+        $and: [
+        { IsPrime: true },
+        { Value: { $gt: prime } },
+        { Value: { $mod: [prime, 0] } }
+        ]
+    }, { $set: { IsPrime: false } })
+
+    prime = getNextPrime(prime);
+}
 

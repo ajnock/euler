@@ -11,20 +11,15 @@ namespace Ulam
 {
     public class Cordinate
     {
-        public long X { get; set; }
-        public long Y { get; set; }
+        [BsonElement]
+        public long X;
+        [BsonElement]
+        public long Y;
     }
 
     [BsonIgnoreExtraElements]
     public class UlamElement
     {
-        [BsonId]
-        public ObjectId Id { get; set; }
-
-        public UlamElement()
-        {
-        }
-
         public UlamElement(long p, long x, long y, bool isPrime = true)
         {
             Location = new Cordinate()
@@ -33,8 +28,12 @@ namespace Ulam
                 Y = y
             };
             Value = p;
-            IsPrime = isPrime && p % 2 == 1;
+            IsPrime = isPrime && p % 2 == 1 && p % 3 != 0;
         }
+
+        [BsonId]
+        public ObjectId Id { get; set; }
+
 
         [BsonElement]
         public long Value { get; set; }
