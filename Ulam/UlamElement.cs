@@ -25,7 +25,7 @@ namespace Ulam
         {
         }
 
-        public UlamElement(long p, long x, long y, bool isPrime = false)
+        public UlamElement(long p, long x, long y, bool isPrime = true)
         {
             Location = new Cordinate()
             {
@@ -33,7 +33,7 @@ namespace Ulam
                 Y = y
             };
             Value = p;
-            IsPrime = isPrime;
+            IsPrime = isPrime && p % 2 == 1;
         }
 
         [BsonElement]
