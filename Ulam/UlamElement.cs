@@ -1,11 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using EulerMath;
 
 namespace Ulam
 {
@@ -22,7 +17,7 @@ namespace Ulam
     {
         public UlamElement(long p, long x, long y, bool isPrime = true)
         {
-            Location = new Cordinate()
+            Location = new Cordinate
             {
                 X = x,
                 Y = y

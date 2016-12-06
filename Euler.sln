@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ulam", "Ulam\Ulam.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UlamTest", "UlamTest\UlamTest.csproj", "{144B65DC-A2BB-4088-95AF-16AB5B4E6D00}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EulerService", "EulerService\EulerService.csproj", "{2E08ABF6-162A-415D-924B-FEC3DCADF417}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EulerService.Tests", "EulerService.Tests\EulerService.Tests.csproj", "{837CBB4F-9AE3-43D4-961A-025F8F35EFD8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,14 @@ Global
 		{144B65DC-A2BB-4088-95AF-16AB5B4E6D00}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{144B65DC-A2BB-4088-95AF-16AB5B4E6D00}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{144B65DC-A2BB-4088-95AF-16AB5B4E6D00}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E08ABF6-162A-415D-924B-FEC3DCADF417}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E08ABF6-162A-415D-924B-FEC3DCADF417}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E08ABF6-162A-415D-924B-FEC3DCADF417}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E08ABF6-162A-415D-924B-FEC3DCADF417}.Release|Any CPU.Build.0 = Release|Any CPU
+		{837CBB4F-9AE3-43D4-961A-025F8F35EFD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{837CBB4F-9AE3-43D4-961A-025F8F35EFD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{837CBB4F-9AE3-43D4-961A-025F8F35EFD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{837CBB4F-9AE3-43D4-961A-025F8F35EFD8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
