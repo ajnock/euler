@@ -4,6 +4,8 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Linq;
+using System.Text;
 
 namespace Ulam
 {
@@ -27,24 +29,18 @@ namespace Ulam
 
         public async Task GenerateAndSave(string file = null)
         {
-            // find the largest number
-            UlamElement largestNumber;
-            var options = new FindOptions<UlamElement, UlamElement>
-            {
-                Sort = new JsonSortDefinition<UlamElement>("{ Value : -1 }"),
-                Limit = 1
-            };
-            using (var cursor = await _map.FindAsync(FilterDefinition<UlamElement>.Empty, options))
-            {
-                largestNumber = await cursor.FirstOrDefaultAsync();
-            }
-
             long initialRoot = 3;
             long minK = (long)Math.Floor((initialRoot + 1) / 2d) + 1;
             long maxK = (long)Math.Sqrt(_max) / 2;
 
+            var largestNumber = await GetLargestNumber();
+
             if (largestNumber == null || largestNumber.Value <= 9)
             {
+                // clear out the collection. This is less than 9 documents
+                var result = await _map.DeleteManyAsync(FilterDefinition<UlamElement>.Empty);
+                NonBlockingConsole.WriteLine("Deleted " + result.DeletedCount + " documents");
+
                 // seed up to 9
                 var seeds = new[] {
                             new UlamElement(1, 0, 0, false),
@@ -58,17 +54,27 @@ namespace Ulam
                             new UlamElement(9,1,-1,false)
                         };
 
-                var insert = _map.InsertManyAsync(seeds);
-
-                // clear out the collection. This is less than 9 documents
-                var result = await _map.DeleteManyAsync(FilterDefinition<UlamElement>.Empty);
-                NonBlockingConsole.WriteLine("Deleted " + result.DeletedCount + " documents");
-
-                await insert;
+                await _map.InsertManyAsync(seeds);
             }
             else
             {
-                long root = (long)(Math.Floor(Math.Sqrt(largestNumber.Value)));
+                long deleted = 0;
+                long count = await _map.CountAsync(FilterDefinition<UlamElement>.Empty);
+                while (count != largestNumber.Value)
+                {
+                    var top = Math.Min(count, largestNumber.Value);
+                    var deleteResult = await _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ Value : { $gt : " + top + " } }"));
+                    NonBlockingConsole.WriteLine("Deleted " + deleteResult.DeletedCount + " documents because " + count + " != " + largestNumber.Value);
+                    deleted += deleteResult.DeletedCount;
+
+                    var t1 = GetLargestNumber();
+                    var t2 = _map.CountAsync(FilterDefinition<UlamElement>.Empty);
+
+                    largestNumber = await t1;
+                    count = await t2;
+                }
+
+                long root = (long)Math.Floor(Math.Sqrt(largestNumber.Value));
 
                 // remove the last ring to be safe 
                 if (root % 2 == 0)
@@ -82,7 +88,9 @@ namespace Ulam
 
                 long p = root * root;
                 var result = await _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ Value : { $gt : " + p + " } }"));
-                NonBlockingConsole.WriteLine("Deleted " + result.DeletedCount + " documents");
+                deleted += result.DeletedCount;
+                NonBlockingConsole.Write(new StringBuilder().Append('.', (int)result.DeletedCount).ToString());
+                NonBlockingConsole.WriteLine("Deleted " + deleted + " total documents");
 
                 minK = (root - 1) / 2;
             }
@@ -106,6 +114,18 @@ namespace Ulam
             }
         }
 
+        private async Task<UlamElement> GetLargestNumber()
+        {
+            var options = new FindOptions<UlamElement, UlamElement>
+            {
+                Sort = new JsonSortDefinition<UlamElement>("{ Value : -1 }"),
+                Limit = 1
+            };
+            var cursor = await _map.FindAsync(FilterDefinition<UlamElement>.Empty, options);
+            var largestNumber = await cursor.FirstOrDefaultAsync();
+            return largestNumber;
+        }
+
         private async Task Produce(long k, BlockingCollection<UlamElement> queue)
         {
             var stopwatch = new Stopwatch();
@@ -115,7 +135,7 @@ namespace Ulam
             long p = root * root;
             long x = root - 2;
             long y = -x;
-            long sideLength = root;
+            long sideLength = (long)Math.Floor(root / 2d);
 
             root += 2;
             long min = p + 1;
