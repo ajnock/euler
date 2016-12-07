@@ -35,28 +35,7 @@ namespace Ulam
 
             var largestNumber = await GetLargestNumber();
 
-            if (largestNumber == null || largestNumber.Value <= 9)
-            {
-                // clear out the collection. This is less than 9 documents
-                var result = await _map.DeleteManyAsync(FilterDefinition<UlamElement>.Empty);
-                NonBlockingConsole.WriteLine("Deleted " + result.DeletedCount + " documents");
-
-                // seed up to 9
-                var seeds = new[] {
-                            new UlamElement(1, 0, 0, false),
-                            new UlamElement(2, 1, 0, true),
-                            new UlamElement(3, 1, 1, true),
-                            new UlamElement(4, 0, 1, false),
-                            new UlamElement(5, -1, 1, true),
-                            new UlamElement(6, -1, 0, false),
-                            new UlamElement(7, -1, -1, true),
-                            new UlamElement(8, 0, -1, false),
-                            new UlamElement(9,1,-1,false)
-                        };
-
-                await _map.InsertManyAsync(seeds);
-            }
-            else
+            if (largestNumber != null)
             {
                 long deleted = 0;
                 long count = await _map.CountAsync(FilterDefinition<UlamElement>.Empty);
@@ -64,6 +43,7 @@ namespace Ulam
                 {
                     var top = Math.Min(count, largestNumber.Value);
                     var deleteResult = await _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ Value : { $gt : " + top + " } }"));
+
                     NonBlockingConsole.WriteLine("Deleted " + deleteResult.DeletedCount + " documents because " + count + " != " + largestNumber.Value);
                     deleted += deleteResult.DeletedCount;
 
@@ -88,26 +68,51 @@ namespace Ulam
 
                 long p = root * root;
                 var result = await _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ Value : { $gt : " + p + " } }"));
+                var task = GetLargestNumber();
+
+                NonBlockingConsole.WriteLine("Deleted " + result.DeletedCount + " documents to get to square " + p);
                 deleted += result.DeletedCount;
-                NonBlockingConsole.Write(new StringBuilder().Append('.', (int)result.DeletedCount).ToString());
                 NonBlockingConsole.WriteLine("Deleted " + deleted + " total documents");
 
                 minK = (root - 1) / 2;
+                largestNumber = await task;
             }
 
+            if (largestNumber == null || largestNumber.Value <= 9)
+            {
+                // clear out the collection. This is less than 9 documents
+                var result = await _map.DeleteManyAsync(FilterDefinition<UlamElement>.Empty);
+                NonBlockingConsole.WriteLine("Deleted " + result.DeletedCount + " documents");
+
+                // seed up to 9
+                var seeds = new[] {
+                            new UlamElement(1, 0, 0, false),
+                            new UlamElement(2, 1, 0, true),
+                            new UlamElement(3, 1, 1, true),
+                            new UlamElement(4, 0, 1, false),
+                            new UlamElement(5, -1, 1, true),
+                            new UlamElement(6, -1, 0, false),
+                            new UlamElement(7, -1, -1, true),
+                            new UlamElement(8, 0, -1, false),
+                            new UlamElement(9,1,-1,false)
+                        };
+
+                await _map.InsertManyAsync(seeds);
+
+                minK = 1;
+            }
+
+            minK = Math.Max(1, minK);
             for (long k = minK; k <= maxK; k++)
             {
-                using (var queue = new BlockingCollection<UlamElement>())
+                using (var queue = new BlockingCollection<UlamElement>(new ConcurrentQueue<UlamElement>()))
                 {
                     Task producer = Produce(k, queue);
 
-                    var parallelOptions = new ParallelOptions();
-                    parallelOptions.MaxDegreeOfParallelism = _clientSettings.MaxConnectionPoolSize;
-
-                    Parallel.ForEach(queue.GetConsumingEnumerable(), parallelOptions, doc =>
+                    foreach (var doc in queue.GetConsumingEnumerable())
                     {
                         _map.InsertOne(doc);
-                    });
+                    }
 
                     await producer;
                 }
@@ -133,9 +138,9 @@ namespace Ulam
 
             long root = 2 * k + 1;
             long p = root * root;
-            long x = root - 2;
+            long x = k;
             long y = -x;
-            long sideLength = (long)Math.Floor(root / 2d);
+            long sideLength = 1 + 2 * k;
 
             root += 2;
             long min = p + 1;
