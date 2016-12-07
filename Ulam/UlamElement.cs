@@ -1,6 +1,4 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using System;
+﻿using MongoDB.Bson.Serialization.Attributes;
 
 namespace Ulam
 {
@@ -38,10 +36,6 @@ namespace Ulam
         }
 
         [BsonId]
-        public ObjectId Id { get; set; }
-
-
-        [BsonElement]
         public long Value { get; set; }
 
         [BsonElement]
@@ -49,14 +43,5 @@ namespace Ulam
 
         [BsonElement]
         public bool IsPrime { get; set; }
-
-        [BsonIgnore]
-        public DateTime CreatedAt
-        {
-            get
-            {
-                return Id.CreationTime.ToLocalTime();
-            }
-        }
     }
 }

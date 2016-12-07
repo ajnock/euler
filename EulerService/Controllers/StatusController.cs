@@ -26,30 +26,44 @@ namespace EulerService.Controllers
         {
             var count = _repo.Count();
             var top = _repo.Newest();
-            var max = _repo.Max();
 
             var content = new
             {
                 Count = await count,
-                Top = await top,
-                Max = await max
+                Top = await top
             };
 
             return Json(content, SerializerSettings);
         }
 
         [HttpGet]
-        public async Task<JsonResult<UlamElement>> Top()
+        public async Task<IHttpActionResult> Count()
         {
-            var content = await _repo.Newest();
+            var content = await _repo.Count();
 
             return Json(content, SerializerSettings);
         }
 
         [HttpGet]
-        public async Task<JsonResult<UlamElement>> Max()
+        [Route("api/status/{id}")]
+        public async Task<IHttpActionResult> Index(long id = 1)
         {
-            var content = await _repo.Max();
+            var content = await _repo.Find(id);
+
+            return Json(content, SerializerSettings);
+        }
+
+        [HttpGet]
+        public async Task<IHttpActionResult> Top()
+        {
+            var content = await _repo.Newest();
+
+            return Json(content, SerializerSettings);
+        }
+         [HttpGet]
+        public async Task<IHttpActionResult> Prime()
+        {
+            var content = await _repo.LargestPrime();
 
             return Json(content, SerializerSettings);
         }

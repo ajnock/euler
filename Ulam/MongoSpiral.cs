@@ -42,7 +42,7 @@ namespace Ulam
                 while (count != largestNumber.Value)
                 {
                     var top = Math.Min(count, largestNumber.Value);
-                    var deleteResult = await _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ Value : { $gt : " + top + " } }"));
+                    var deleteResult = await _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ _id : { $gt : " + top + " } }"));
 
                     NonBlockingConsole.WriteLine("Deleted " + deleteResult.DeletedCount + " documents because " + count + " != " + largestNumber.Value);
                     deleted += deleteResult.DeletedCount;
@@ -67,7 +67,7 @@ namespace Ulam
                 }
 
                 long p = root * root;
-                var result = await _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ Value : { $gt : " + p + " } }"));
+                var result = await _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ _id : { $gt : " + p + " } }"));
                 var task = GetLargestNumber();
 
                 NonBlockingConsole.WriteLine("Deleted " + result.DeletedCount + " documents to get to square " + p);
@@ -123,7 +123,7 @@ namespace Ulam
         {
             var options = new FindOptions<UlamElement, UlamElement>
             {
-                Sort = new JsonSortDefinition<UlamElement>("{ Value : -1 }"),
+                Sort = new JsonSortDefinition<UlamElement>("{ _id : -1 }"),
                 Limit = 1
             };
             var cursor = await _map.FindAsync(FilterDefinition<UlamElement>.Empty, options);
