@@ -190,14 +190,14 @@ namespace Ulam
                           + "Max".PadRight(max.ToString().Length) + " | "
                           + "Delta".PadRight(diff.ToString().Length) + " | "
                           + "To Go".PadRight(toGo.ToString().Length) + " | "
-                          + "Elapsed".PadRight(stopwatch.Elapsed.TotalMilliseconds.ToString().Length + 2)
+                          + "Elapsed".PadRight(stopwatch.Elapsed.TotalMilliseconds.ToString().Length + 3)
                           + "\r\n" + DateTime.Now.ToString("MM/dd/yy H:mm:ss.ff") + " | "
                           + root.ToString().PadRight(4) + " | "
                           + min.ToString().PadRight(3) + " | "
                           + max.ToString().PadRight(3) + " | "
                           + diff.ToString().PadRight(5) + " | "
                           + toGo.ToString().PadRight(5) + " | "
-                          + stopwatch.Elapsed.TotalMilliseconds.ToString().PadRight(7) + "ms";
+                          + (stopwatch.Elapsed.TotalMilliseconds + " ms").PadRight(7);
             NonBlockingConsole.WriteLine(message);
         }
     }
