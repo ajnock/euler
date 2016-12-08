@@ -15,7 +15,8 @@ function getNextPrime(p) {
 
 // start sieving at 3 because that's
 var prime = getNextPrime(1);
-while (prime != null && prime <= 9223372036854775807 / 3) {
+var max = db.map.find().sort({ _id: -1 }).limit(1)._id;
+while (prime != null && prime <= max / 3) {
     print("Sieving " + prime);
 
     db.map.updateMany({
