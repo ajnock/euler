@@ -1,10 +1,7 @@
-﻿using MongoDB.Driver;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System.Threading.Tasks;
 using System.Web.Http;
-using System.Web.Http.Results;
 using EulerService.Models;
-using Ulam;
 
 namespace EulerService.Controllers
 {
@@ -37,6 +34,7 @@ namespace EulerService.Controllers
         }
 
         [HttpGet]
+        [Route("api/status/count")]
         public async Task<IHttpActionResult> Count()
         {
             var content = await _repo.Count();
@@ -46,7 +44,7 @@ namespace EulerService.Controllers
 
         [HttpGet]
         [Route("api/status/{id}")]
-        public async Task<IHttpActionResult> Index(long id = 1)
+        public async Task<IHttpActionResult> Index(long id)
         {
             var content = await _repo.Find(id);
 
@@ -54,13 +52,16 @@ namespace EulerService.Controllers
         }
 
         [HttpGet]
+        [Route("api/status/top")]
         public async Task<IHttpActionResult> Top()
         {
             var content = await _repo.Newest();
 
             return Json(content, SerializerSettings);
         }
-         [HttpGet]
+
+        [HttpGet]
+        [Route("api/status/prime")]
         public async Task<IHttpActionResult> Prime()
         {
             var content = await _repo.LargestPrime();
