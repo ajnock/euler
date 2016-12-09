@@ -26,6 +26,11 @@ namespace Ulam
             _map = client.GetDatabase("Ulam").GetCollection<UlamElement>("map");
         }
 
+        /// <summary>
+        /// Generates a Ulam spiral and persists it to a MongoDB collection
+        /// </summary>
+        /// <param name="file"></param>
+        /// <returns></returns>
         public async Task GenerateAndSave(string file = null)
         {
             long initialRoot = 3;
@@ -105,11 +110,13 @@ namespace Ulam
 
                 using (var queue = new BlockingCollection<UlamElement>())
                 {
+                    // produce
                     Task producer = Produce(k, queue);
 
                     var options = new ParallelOptions();
                     options.MaxDegreeOfParallelism = _clientSettings.MaxConnectionPoolSize;
 
+                    // consume
                     Parallel.ForEach(queue.GetConsumingPartitioner(), options, element =>
                     {
                         element.IsPrime = IsPrime(element);
@@ -198,9 +205,17 @@ namespace Ulam
             };
             var cursor = await _map.FindAsync(FilterDefinition<UlamElement>.Empty, options);
             var largestNumber = await cursor.FirstOrDefaultAsync();
+
             return largestNumber;
         }
 
+        /// <summary>
+        /// Produces one loop of the spiral and writes it to the queue.
+        /// 2<paramref name="k"/>+1)^2 $lt x $lte (2(<paramref name="k"/>+1)+1)^2
+        /// </summary>
+        /// <param name="k"></param>
+        /// <param name="queue"></param>
+        /// <returns></returns>
         private async Task Produce(long k, BlockingCollection<UlamElement> queue)
         {
             long root = 2 * k + 1;
