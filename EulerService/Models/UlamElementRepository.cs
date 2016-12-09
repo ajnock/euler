@@ -37,26 +37,34 @@ namespace EulerService.Models
             return count;
         }
 
+        public async Task<long> CountPrimes()
+        {
+            var filter = new JsonFilterDefinition<UlamElement>("{ IsPrime : true }");
+            var count = await _map.CountAsync(filter);
+            return count;
+        }
+
         public async Task<UlamElement> Find(long id)
         {
-            var cursor = await _map.FindAsync(new JsonFilterDefinition<UlamElement>("{ _id : " + id + " }"));
+            var cursor = await _map.FindAsync(new JsonFilterDefinition<UlamElement>("{ Value : " + id + " }"));
             var element = await cursor.FirstOrDefaultAsync();
 
             return element;
         }
 
-        public async Task<long> LargestPrime()
+        public async Task<UlamElement> LargestPrime()
         {
-            var options = new FindOptions<BsonDocument>
+            var filter = new JsonFilterDefinition<UlamElement>("{ IsPrime : true }");
+            var options = new FindOptions<UlamElement>
             {
                 Limit = 1,
-                Sort = new JsonSortDefinition<BsonDocument>("{ _id : -1 }")
+                Sort = new JsonSortDefinition<UlamElement>("{ Value : -1 }")
             };
 
-            var cursor = await _primes.FindAsync(JsonFilterDefinition<BsonDocument>.Empty, options);
+            var cursor = await _map.FindAsync(filter, options);
             var last = await cursor.FirstOrDefaultAsync();
 
-            return last["_id"].AsInt64;
+            return last;
         }
     }
 }

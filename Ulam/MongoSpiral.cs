@@ -4,8 +4,6 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 
 namespace Ulam
 {
@@ -13,6 +11,7 @@ namespace Ulam
     {
         private readonly long _max;
         private readonly IMongoCollection<UlamElement> _map;
+        //private readonly IMongoCollection<UlamElement> _primes;
         private readonly MongoClientSettings _clientSettings;
 
         public MongoSpiral(long max = long.MaxValue)
@@ -25,6 +24,7 @@ namespace Ulam
             };
             var client = new MongoClient(_clientSettings);
             _map = client.GetDatabase("Ulam").GetCollection<UlamElement>("map");
+            //_map = client.GetDatabase("Ulam").GetCollection<UlamElement>("primes");
         }
 
         public async Task GenerateAndSave(string file = null)
@@ -42,7 +42,7 @@ namespace Ulam
                 while (count != largestNumber.Value)
                 {
                     var top = Math.Min(count, largestNumber.Value);
-                    var deleteResult = await _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ _id : { $gt : " + top + " } }"));
+                    var deleteResult = await _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ Value : { $gt : " + top + " } }"));
 
                     NonBlockingConsole.WriteLine("Deleted " + deleteResult.DeletedCount + " documents because " + count + " != " + largestNumber.Value);
                     deleted += deleteResult.DeletedCount;
@@ -67,7 +67,7 @@ namespace Ulam
                 }
 
                 long p = root * root;
-                var result = await _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ _id : { $gt : " + p + " } }"));
+                var result = await _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ Value : { $gt : " + p + " } }"));
                 var task = GetLargestNumber();
 
                 NonBlockingConsole.WriteLine("Deleted " + result.DeletedCount + " documents to get to square " + p);
@@ -106,24 +106,79 @@ namespace Ulam
             for (long k = minK; k <= maxK; k++)
             {
                 using (var queue = new BlockingCollection<UlamElement>(new ConcurrentQueue<UlamElement>()))
+                using (var queue2 = new BlockingCollection<UlamElement>(new ConcurrentQueue<UlamElement>()))
                 {
                     Task producer = Produce(k, queue);
+                    Task primer = Prime(queue, queue2);
 
-                    foreach (var doc in queue.GetConsumingEnumerable())
+                    foreach (var doc in queue2.GetConsumingEnumerable())
                     {
                         _map.InsertOne(doc);
                     }
 
-                    await producer;
+                    await Task.WhenAll(producer, primer);
                 }
             }
+        }
+
+        private async Task Prime(BlockingCollection<UlamElement> inQueue, BlockingCollection<UlamElement> outQueue)
+        {
+            var options = new ParallelOptions();
+            options.MaxDegreeOfParallelism = _clientSettings.MaxConnectionPoolSize - 1;
+
+            Parallel.ForEach(inQueue.GetConsumingEnumerable(), options, element =>
+            {
+                if (IsPrime(element.Value))
+                {
+                    element.IsPrime = true;
+                }
+                else
+                {
+                    element.IsPrime = false;
+                }
+
+                outQueue.Add(element);
+            });
+
+            outQueue.CompleteAdding();
+        }
+
+        private bool IsPrime(long p)
+        {
+            if (p == 1)
+            {
+                return false;
+            }
+            if (p == 2 || p == 3)
+            {
+                return true;
+            }
+            if (p % 2 == 0 || p % 3 == 0)
+            {
+                return false;
+            }
+
+            long max = (long)Math.Ceiling(p / 5d);
+            var filter = new JsonFilterDefinition<UlamElement>("{ $and : [ { IsPrime : true }, { Value : { $lte : " + max + " } } ] }");
+            var cursor = _map.FindSync(filter);
+
+            foreach (var prime in cursor.ToEnumerable())
+            {
+                var mod = p % prime.Value;
+                if (mod == 0)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private async Task<UlamElement> GetLargestNumber()
         {
             var options = new FindOptions<UlamElement, UlamElement>
             {
-                Sort = new JsonSortDefinition<UlamElement>("{ _id : -1 }"),
+                Sort = new JsonSortDefinition<UlamElement>("{ Value : -1 }"),
                 Limit = 1
             };
             var cursor = await _map.FindAsync(FilterDefinition<UlamElement>.Empty, options);

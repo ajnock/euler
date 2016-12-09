@@ -21,13 +21,17 @@ namespace EulerService.Controllers
         [HttpGet]
         public async Task<IHttpActionResult> Index()
         {
-            var count = _repo.Count();
-            var top = _repo.Newest();
+            var totalCount = _repo.Count();
+            var primesCount = _repo.CountPrimes();
+            var largestPrime = _repo.LargestPrime();
+            var newest = _repo.Newest();
 
             var content = new
             {
-                Count = await count,
-                Top = await top
+                PrimesCount = await primesCount,
+                TotalCount = await totalCount,
+                Newest = await newest,
+                LargestPrime = await largestPrime
             };
 
             return Json(content, SerializerSettings);
