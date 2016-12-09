@@ -103,14 +103,20 @@ namespace Ulam
                 var stopwatch = new Stopwatch();
                 stopwatch.Start();
 
-                using (var inQueue = new BlockingCollection<UlamElement>())
-                using (var outQueue = new BlockingCollection<UlamElement>())
+                using (var queue = new BlockingCollection<UlamElement>())
                 {
-                    Task producer = Produce(k, inQueue);
-                    Task primer = Prime(inQueue, outQueue);
-                    Task consumer = Consume(outQueue);
+                    Task producer = Produce(k, queue);
 
-                    await Task.WhenAll(producer, primer, consumer);
+                    var options = new ParallelOptions();
+                    options.MaxDegreeOfParallelism = _clientSettings.MaxConnectionPoolSize;
+
+                    Parallel.ForEach(queue.GetConsumingPartitioner(), options, element =>
+                    {
+                        element.IsPrime = IsPrime(element);
+                        _map.InsertOne(element);
+                    });
+
+                    await producer;
                 }
 
                 stopwatch.Stop();
@@ -140,28 +146,6 @@ namespace Ulam
 
                 NonBlockingConsole.WriteLine(message);
             }
-        }
-
-        private async Task Consume(BlockingCollection<UlamElement> queue2)
-        {
-            foreach (var doc in queue2.GetConsumingEnumerable())
-            {
-                _map.InsertOne(doc);
-            }
-        }
-
-        private async Task Prime(BlockingCollection<UlamElement> inQueue, BlockingCollection<UlamElement> outQueue)
-        {
-            var options = new ParallelOptions();
-            options.MaxDegreeOfParallelism = _clientSettings.MaxConnectionPoolSize - 1;
-
-            Parallel.ForEach(inQueue.GetConsumingEnumerable(), options, element =>
-            {
-                element.IsPrime = IsPrime(element);
-                outQueue.Add(element);
-            });
-
-            outQueue.CompleteAdding();
         }
 
         private bool IsPrime(UlamElement element)
