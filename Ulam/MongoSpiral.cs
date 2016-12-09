@@ -4,6 +4,7 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using EulerMath;
 
 namespace Ulam
 {
@@ -56,14 +57,10 @@ namespace Ulam
 
                 long root = (long)Math.Floor(Math.Sqrt(largestNumber.Value));
 
-                // remove the last ring to be safe 
+                // make the root odd
                 if (root % 2 == 0)
                 {
                     root--;
-                }
-                else
-                {
-                    root -= 2;
                 }
 
                 long p = root * root;
@@ -105,8 +102,11 @@ namespace Ulam
             minK = Math.Max(1, minK);
             for (long k = minK; k <= maxK; k++)
             {
-                using (var queue = new BlockingCollection<UlamElement>(new ConcurrentQueue<UlamElement>()))
-                using (var queue2 = new BlockingCollection<UlamElement>(new ConcurrentQueue<UlamElement>()))
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
+
+                using (var queue = new BlockingCollection<UlamElement>())
+                using (var queue2 = new BlockingCollection<UlamElement>())
                 {
                     Task producer = Produce(k, queue);
                     Task primer = Prime(queue, queue2);
@@ -118,6 +118,33 @@ namespace Ulam
 
                     await Task.WhenAll(producer, primer);
                 }
+
+                stopwatch.Stop();
+
+                long root = 2 * k + 1;
+                long p = root * root;
+                long min = p + 1;
+                long max = (root + 2) * (root + 2);
+                long diff = max - min;
+                long toGo = _max - p;
+                var timeSpan = stopwatch.Elapsed.ToHumanReadableString();
+
+                var message = "Time Stamp          " + " | "
+                              + "Root".PadRight(root.ToString().Length) + " | "
+                              + "Min".PadRight(min.ToString().Length) + " | "
+                              + "Max".PadRight(max.ToString().Length) + " | "
+                              + "Delta".PadRight(diff.ToString().Length) + " | "
+                              + "To Go".PadRight(toGo.ToString().Length) + " | "
+                              + "Elapsed".PadRight(timeSpan.Length)
+                              + "\r\n" + DateTime.Now.ToString("MM/dd/yy H:mm:ss.ff") + " | "
+                              + root.ToString().PadRight(4) + " | "
+                              + min.ToString().PadRight(3) + " | "
+                              + max.ToString().PadRight(3) + " | "
+                              + diff.ToString().PadRight(5) + " | "
+                              + toGo.ToString().PadRight(5) + " | "
+                              + timeSpan.PadRight(7);
+
+                NonBlockingConsole.WriteLine(message);
             }
         }
 
@@ -128,7 +155,7 @@ namespace Ulam
 
             Parallel.ForEach(inQueue.GetConsumingEnumerable(), options, element =>
             {
-                if (IsPrime(element.Value))
+                if (IsPrime(element))
                 {
                     element.IsPrime = true;
                 }
@@ -143,10 +170,12 @@ namespace Ulam
             outQueue.CompleteAdding();
         }
 
-        private bool IsPrime(long p)
+        private bool IsPrime(UlamElement element)
         {
+            var p = element.Value;
             if (p == 1)
             {
+                // one is a special case
                 return false;
             }
             if (p == 2 || p == 3)
@@ -155,11 +184,19 @@ namespace Ulam
             }
             if (p % 2 == 0 || p % 3 == 0)
             {
+                // this eliminates a lot of numbers without looking to the database
+                return false;
+            }
+
+            // this is an odd perfect square of a prime,  we would have to scan  up to Sqrt(p) to find the divisor, so we quit early with this easy check
+            if (element.Location.X > 0 && element.Location.X == -1 * element.Location.Y)
+            {
                 return false;
             }
 
             long max = (long)Math.Ceiling(p / 5d);
             var filter = new JsonFilterDefinition<UlamElement>("{ $and : [ { IsPrime : true }, { Value : { $lte : " + max + " } } ] }");
+
             var cursor = _map.FindSync(filter);
 
             foreach (var prime in cursor.ToEnumerable())
@@ -188,20 +225,11 @@ namespace Ulam
 
         private async Task Produce(long k, BlockingCollection<UlamElement> queue)
         {
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
-
             long root = 2 * k + 1;
             long p = root * root;
             long x = k;
             long y = -x;
             long sideLength = 1 + 2 * k;
-
-            root += 2;
-            long min = p + 1;
-            long max = root * root;
-            long diff = max - min;
-            long toGo = _max - p;
 
             x++;
             p++;
@@ -237,23 +265,6 @@ namespace Ulam
             }
 
             queue.CompleteAdding();
-
-            stopwatch.Stop();
-            var message = "Time Stamp          " + " | "
-                          + "Root".PadRight(root.ToString().Length) + " | "
-                          + "Min".PadRight(min.ToString().Length) + " | "
-                          + "Max".PadRight(max.ToString().Length) + " | "
-                          + "Delta".PadRight(diff.ToString().Length) + " | "
-                          + "To Go".PadRight(toGo.ToString().Length) + " | "
-                          + "Elapsed".PadRight(stopwatch.Elapsed.TotalMilliseconds.ToString().Length + 3)
-                          + "\r\n" + DateTime.Now.ToString("MM/dd/yy H:mm:ss.ff") + " | "
-                          + root.ToString().PadRight(4) + " | "
-                          + min.ToString().PadRight(3) + " | "
-                          + max.ToString().PadRight(3) + " | "
-                          + diff.ToString().PadRight(5) + " | "
-                          + toGo.ToString().PadRight(5) + " | "
-                          + (stopwatch.Elapsed.TotalMilliseconds + " ms").PadRight(7);
-            NonBlockingConsole.WriteLine(message);
         }
     }
 }
