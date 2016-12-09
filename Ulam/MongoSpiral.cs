@@ -20,7 +20,7 @@ namespace Ulam
             _clientSettings = new MongoClientSettings
             {
                 // this is the default setting (100)
-                MaxConnectionPoolSize = int.MaxValue
+                //MaxConnectionPoolSize = int.MaxValue
             };
             var client = new MongoClient(_clientSettings);
             _map = client.GetDatabase("Ulam").GetCollection<UlamElement>("map");
@@ -85,17 +85,18 @@ namespace Ulam
                 NonBlockingConsole.WriteLine("Deleted " + result.DeletedCount + " documents");
 
                 // seed up to 9
-                var seeds = new[] {
-                            new UlamElement(1, 0, 0, false),
-                            new UlamElement(2, 1, 0, true),
-                            new UlamElement(3, 1, 1, true),
-                            new UlamElement(4, 0, 1, false),
-                            new UlamElement(5, -1, 1, true),
-                            new UlamElement(6, -1, 0, false),
-                            new UlamElement(7, -1, -1, true),
-                            new UlamElement(8, 0, -1, false),
-                            new UlamElement(9,1,-1,false)
-                        };
+                var seeds = new[]
+                {
+                    new UlamElement(1, 0, 0, false),
+                    new UlamElement(2, 1, 0, true),
+                    new UlamElement(3, 1, 1, true),
+                    new UlamElement(4, 0, 1, false),
+                    new UlamElement(5, -1, 1, true),
+                    new UlamElement(6, -1, 0, false),
+                    new UlamElement(7, -1, -1, true),
+                    new UlamElement(8, 0, -1, false),
+                    new UlamElement(9, 1, -1, false)
+                };
 
                 await _map.InsertManyAsync(seeds);
 
@@ -170,7 +171,7 @@ namespace Ulam
             {
                 return true;
             }
-            if (p % 2 == 0 || p % 3 == 0)
+            if (p % 2 == 0 || p % 3 == 0 || p % 5 == 0 || p % 7 == 0)
             {
                 // this eliminates a lot of numbers without looking to the database
                 return false;

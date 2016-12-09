@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using System;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace Ulam
@@ -48,5 +49,11 @@ namespace Ulam
 
         [BsonElement]
         public bool IsPrime { get; set; }
+
+        [BsonIgnore]
+        public DateTime CreatedAt
+        {
+            get { return Id.CreationTime.ToLocalTime(); }
+        }
     }
 }
