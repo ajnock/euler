@@ -83,6 +83,10 @@
       <Project>{1990cb57-ab46-4358-af49-23f1b07c4522}</Project>
       <Name>EulerMath</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ParallelExtensionsExtras\ParallelExtensionsExtras.csproj">
+      <Project>{c45218f8-09e7-4f57-85bc-5d8d2ac736a3}</Project>
+      <Name>ParallelExtensionsExtras</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Initialize.js" />
