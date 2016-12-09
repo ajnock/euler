@@ -4,9 +4,7 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using EulerMath;
-using MongoDB.Bson;
 
 namespace Ulam
 {
@@ -14,11 +12,7 @@ namespace Ulam
     {
         private readonly long _max;
         private readonly IMongoCollection<UlamElement> _map;
-        //private readonly IMongoCollection<UlamElement> _primes;
         private readonly MongoClientSettings _clientSettings;
-
-        private static readonly int ConsumingThreads = 2;
-        private static readonly int ProducingThreads = 100;
 
         public MongoSpiral(long max = long.MaxValue)
         {
@@ -26,11 +20,10 @@ namespace Ulam
             _clientSettings = new MongoClientSettings
             {
                 // this is the default setting (100)
-                MaxConnectionPoolSize = 100
+                MaxConnectionPoolSize = int.MaxValue
             };
             var client = new MongoClient(_clientSettings);
             _map = client.GetDatabase("Ulam").GetCollection<UlamElement>("map");
-            //_map = client.GetDatabase("Ulam").GetCollection<UlamElement>("primes");
         }
 
         public async Task GenerateAndSave(string file = null)
@@ -110,12 +103,12 @@ namespace Ulam
                 var stopwatch = new Stopwatch();
                 stopwatch.Start();
 
-                using (var queue = new BlockingCollection<UlamElement>())
-                using (var queue2 = new BlockingCollection<UlamElement>())
+                using (var inQueue = new BlockingCollection<UlamElement>())
+                using (var outQueue = new BlockingCollection<UlamElement>())
                 {
-                    Task producer = Produce(k, queue);
-                    Task primer = Prime(queue, queue2);
-                    Task consumer = Consume(queue2);
+                    Task producer = Produce(k, inQueue);
+                    Task primer = Prime(inQueue, outQueue);
+                    Task consumer = Consume(outQueue);
 
                     await Task.WhenAll(producer, primer, consumer);
                 }
