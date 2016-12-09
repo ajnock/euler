@@ -188,7 +188,7 @@ namespace Ulam
                 return false;
             }
 
-            long max = (long)Math.Ceiling(p / 5d);
+            long max = (long)Math.Ceiling(Math.Sqrt(p));
             var filter = new JsonFilterDefinition<UlamElement>("{ $and : [ { IsPrime : true }, { Value : { $lte : " + max + " } } ] }");
 
             var cursor = _map.FindSync(filter);
