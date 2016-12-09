@@ -43,7 +43,7 @@ namespace Ulam
                     var top = Math.Min(count, largestNumber.Value);
                     var deleteResult = await _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ Value : { $gt : " + top + " } }"));
 
-                    NonBlockingConsole.WriteLine("Deleted " + deleteResult.DeletedCount + " documents because " + count + " != " + largestNumber.Value);
+                    NonBlockingConsole.WriteLine("Deleted " + deleteResult.DeletedCount + " documents because count is " + count + " but the largest number is " + largestNumber.Value);
                     deleted += deleteResult.DeletedCount;
 
                     var t1 = GetLargestNumber();
