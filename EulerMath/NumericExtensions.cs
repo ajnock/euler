@@ -45,7 +45,7 @@ namespace EulerMath
 
         public static string ToHumanReadableString(this TimeSpan t)
         {
-            if (t.TotalSeconds <= 1)
+            if (t.TotalSeconds <= 10)
             {
                 return t.TotalMilliseconds.ToString("F") + " ms";
             }
