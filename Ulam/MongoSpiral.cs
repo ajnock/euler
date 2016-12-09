@@ -4,7 +4,9 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using EulerMath;
+using MongoDB.Bson;
 
 namespace Ulam
 {
@@ -14,6 +16,9 @@ namespace Ulam
         private readonly IMongoCollection<UlamElement> _map;
         //private readonly IMongoCollection<UlamElement> _primes;
         private readonly MongoClientSettings _clientSettings;
+
+        private static readonly int ConsumingThreads = 2;
+        private static readonly int ProducingThreads = 100;
 
         public MongoSpiral(long max = long.MaxValue)
         {
@@ -110,13 +115,9 @@ namespace Ulam
                 {
                     Task producer = Produce(k, queue);
                     Task primer = Prime(queue, queue2);
+                    Task consumer = Consume(queue2);
 
-                    foreach (var doc in queue2.GetConsumingEnumerable())
-                    {
-                        _map.InsertOne(doc);
-                    }
-
-                    await Task.WhenAll(producer, primer);
+                    await Task.WhenAll(producer, primer, consumer);
                 }
 
                 stopwatch.Stop();
@@ -148,6 +149,14 @@ namespace Ulam
             }
         }
 
+        private async Task Consume(BlockingCollection<UlamElement> queue2)
+        {
+            foreach (var doc in queue2.GetConsumingEnumerable())
+            {
+                _map.InsertOne(doc);
+            }
+        }
+
         private async Task Prime(BlockingCollection<UlamElement> inQueue, BlockingCollection<UlamElement> outQueue)
         {
             var options = new ParallelOptions();
@@ -155,15 +164,7 @@ namespace Ulam
 
             Parallel.ForEach(inQueue.GetConsumingEnumerable(), options, element =>
             {
-                if (IsPrime(element))
-                {
-                    element.IsPrime = true;
-                }
-                else
-                {
-                    element.IsPrime = false;
-                }
-
+                element.IsPrime = IsPrime(element);
                 outQueue.Add(element);
             });
 

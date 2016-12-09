@@ -7,6 +7,7 @@ namespace Ulam
     {
         [BsonElement]
         public long X;
+
         [BsonElement]
         public long Y;
     }
