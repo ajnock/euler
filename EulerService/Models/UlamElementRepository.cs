@@ -8,16 +8,14 @@ namespace EulerService.Models
     public class UlamElementRepository
     {
         private readonly IMongoCollection<UlamElement> _map;
-        private readonly IMongoCollection<BsonDocument> _primes;
 
         public UlamElementRepository()
         {
             var client = new MongoClient();
             _map = client.GetDatabase("Ulam").GetCollection<UlamElement>("map");
-            _primes = client.GetDatabase("Ulam").GetCollection<BsonDocument>("primes");
         }
 
-        public async Task<UlamElement> Newest()
+        public async Task<UlamElement> NewestNumber()
         {
             var options = new FindOptions<UlamElement>
             {
@@ -37,7 +35,7 @@ namespace EulerService.Models
             return count;
         }
 
-        public async Task<long> CountPrimes()
+        public async Task<long> PrimesCount()
         {
             var filter = new JsonFilterDefinition<UlamElement>("{ IsPrime : true }");
             var count = await _map.CountAsync(filter);
@@ -55,6 +53,21 @@ namespace EulerService.Models
         public async Task<UlamElement> LargestPrime()
         {
             var filter = new JsonFilterDefinition<UlamElement>("{ IsPrime : true }");
+            var options = new FindOptions<UlamElement>
+            {
+                Limit = 1,
+                Sort = new JsonSortDefinition<UlamElement>("{ Value : -1 }")
+            };
+
+            var cursor = await _map.FindAsync(filter, options);
+            var last = await cursor.FirstOrDefaultAsync();
+
+            return last;
+        }
+
+        public async Task<UlamElement> LargestNumber()
+        {
+            var filter = JsonFilterDefinition<UlamElement>.Empty;
             var options = new FindOptions<UlamElement>
             {
                 Limit = 1,

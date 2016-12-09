@@ -22,16 +22,18 @@ namespace EulerService.Controllers
         public async Task<IHttpActionResult> Index()
         {
             var totalCount = _repo.Count();
-            var primesCount = _repo.CountPrimes();
+            var primesCount = _repo.PrimesCount();
+            var largestNumber = _repo.LargestNumber();
             var largestPrime = _repo.LargestPrime();
-            var newest = _repo.Newest();
+            var newest = _repo.NewestNumber();
 
             var content = new
             {
                 PrimesCount = await primesCount,
                 TotalCount = await totalCount,
                 Newest = await newest,
-                LargestPrime = await largestPrime
+                LargestPrime = await largestPrime,
+                LargestNumber = await  largestNumber
             };
 
             return Json(content, SerializerSettings);
@@ -59,7 +61,7 @@ namespace EulerService.Controllers
         [Route("api/status/top")]
         public async Task<IHttpActionResult> Top()
         {
-            var content = await _repo.Newest();
+            var content = await _repo.NewestNumber();
 
             return Json(content, SerializerSettings);
         }
