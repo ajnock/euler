@@ -132,9 +132,10 @@ namespace Ulam
                 long p = root * root;
                 long min = p + 1;
                 long max = (root + 2) * (root + 2);
-                long diff = max - min;
-                long toGo = _max - p;
+                var diff = max - min;
+                var toGo = _max - p;
                 var timeSpan = stopwatch.Elapsed.ToHumanReadableString();
+                var rate = diff / stopwatch.Elapsed.TotalSeconds;
 
                 var message = "Time Stamp          " + " | "
                               + "Root".PadRight(root.ToString().Length) + " | "
@@ -142,14 +143,16 @@ namespace Ulam
                               + "Max".PadRight(max.ToString().Length) + " | "
                               + "Delta".PadRight(diff.ToString().Length) + " | "
                               + "To Go".PadRight(toGo.ToString().Length) + " | "
-                              + "Elapsed".PadRight(timeSpan.Length)
-                              + "\r\n" + DateTime.Now.ToString("MM/dd/yy H:mm:ss.ff") + " | "
+                              + "Elapsed".PadRight(timeSpan.Length) + " | "
+                              + "Rate".PadRight(rate.ToString().Length + 3)
+                              + "\r\n" + DateTime.Now.ToString("MM/dd/yy HH:mm:ss.ff") + " | "
                               + root.ToString().PadRight(4) + " | "
                               + min.ToString().PadRight(3) + " | "
                               + max.ToString().PadRight(3) + " | "
                               + diff.ToString().PadRight(5) + " | "
                               + toGo.ToString().PadRight(5) + " | "
-                              + timeSpan.PadRight(7);
+                              + timeSpan.PadRight(7) + " | "
+                              + rate.ToString("F3").PadRight(4) + " #/s";
 
                 NonBlockingConsole.WriteLine(message);
             }
