@@ -3,7 +3,9 @@ using MongoDB.Driver;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using EulerMath;
 
 namespace Ulam
@@ -37,22 +39,19 @@ namespace Ulam
             long minK = (long)Math.Floor((initialRoot + 1) / 2d) + 1;
             long maxK = (long)Math.Sqrt(_max) / 2;
 
-            var largestNumber = await GetLargestNumber();
+            var largestNumber = await GetMax();
 
             if (largestNumber != null)
             {
-                long deleted = 0;
-                long count = await _map.CountAsync(FilterDefinition<UlamElement>.Empty);
+                long count = await Count();
                 while (count != largestNumber.Value)
                 {
                     var top = Math.Min(count, largestNumber.Value);
-                    var deleteResult = await _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ Value : { $gt : " + top + " } }"));
 
-                    NonBlockingConsole.WriteLine("Deleted " + deleteResult.DeletedCount + " documents because count is " + count + " but the largest number is " + largestNumber.Value);
-                    deleted += deleteResult.DeletedCount;
+                    NonBlockingConsole.WriteLine(DateTime.Now.ToString("MM/dd/yy HH:mm:ss.ff") + ": Stepping back to " + top);
 
-                    var t1 = GetLargestNumber();
-                    var t2 = _map.CountAsync(FilterDefinition<UlamElement>.Empty);
+                    var t1 = GetMax(top);
+                    var t2 = Count(top);
 
                     largestNumber = await t1;
                     count = await t2;
@@ -66,41 +65,42 @@ namespace Ulam
                     root--;
                 }
 
-                long p = root * root;
-                var result = await _map.DeleteManyAsync(new JsonFilterDefinition<UlamElement>("{ Value : { $gt : " + p + " } }"));
-                var task = GetLargestNumber();
-
-                NonBlockingConsole.WriteLine("Deleted " + result.DeletedCount + " documents to get to square " + p);
-                deleted += result.DeletedCount;
-                NonBlockingConsole.WriteLine("Deleted " + deleted + " total documents");
-
                 minK = (root - 1) / 2;
-                largestNumber = await task;
             }
 
             if (largestNumber == null || largestNumber.Value <= 9)
             {
-                // clear out the collection. This is less than 9 documents
-                var result = await _map.DeleteManyAsync(FilterDefinition<UlamElement>.Empty);
-                NonBlockingConsole.WriteLine("Deleted " + result.DeletedCount + " documents");
-
-                // seed up to 9
-                var seeds = new[]
+                try
                 {
-                    new UlamElement(1, 0, 0, false),
-                    new UlamElement(2, 1, 0, true),
-                    new UlamElement(3, 1, 1, true),
-                    new UlamElement(4, 0, 1, false),
-                    new UlamElement(5, -1, 1, true),
-                    new UlamElement(6, -1, 0, false),
-                    new UlamElement(7, -1, -1, true),
-                    new UlamElement(8, 0, -1, false),
-                    new UlamElement(9, 1, -1, false)
-                };
+                    // clear out the collection. This is less than 9 documents
+                    var result = await _map.DeleteManyAsync(FilterDefinition<UlamElement>.Empty);
+                    NonBlockingConsole.WriteLine("Deleted " + result.DeletedCount + " documents");
 
-                await _map.InsertManyAsync(seeds);
+                    // seed up to 9
+                    var seeds = new[]
+                    {
+                        new UlamElement(1, 0, 0, false),
+                        new UlamElement(2, 1, 0, true),
+                        new UlamElement(3, 1, 1, true),
+                        new UlamElement(4, 0, 1, false),
+                        new UlamElement(5, -1, 1, true),
+                        new UlamElement(6, -1, 0, false),
+                        new UlamElement(7, -1, -1, true),
+                        new UlamElement(8, 0, -1, false),
+                        new UlamElement(9, 1, -1, false)
+                    };
 
-                minK = 1;
+                    await _map.InsertManyAsync(seeds);
+
+                    minK = 1;
+                }
+                catch (MongoWriteException ex)
+                {
+                    if (ex.WriteError.Category != ServerErrorCategory.DuplicateKey)
+                    {
+                        throw;
+                    }
+                }
             }
 
             minK = Math.Max(1, minK);
@@ -109,22 +109,72 @@ namespace Ulam
                 var stopwatch = new Stopwatch();
                 stopwatch.Start();
 
-                using (var queue = new BlockingCollection<UlamElement>())
+                long tries = 0;
+                long dups = 0;
+
+                long localMax = (2 * k + 3) * (2 * k + 3);
+                var count = await Count(localMax);
+
+                var cache = new HashSet<UlamElement>();
+
+                while (count < localMax)
                 {
-                    // produce
-                    Task producer = Produce(k, queue);
+                    tries++;
 
-                    var options = new ParallelOptions();
-                    options.MaxDegreeOfParallelism = _clientSettings.MaxConnectionPoolSize;
-
-                    // consume
-                    Parallel.ForEach(queue.GetConsumingPartitioner(), options, element =>
+                    if (tries > 1)
                     {
-                        element.IsPrime = IsPrime(element);
-                        _map.InsertOne(element);
-                    });
+                        foreach (var element in cache)
+                        {
+                            try
+                            {
+                                _map.InsertOne(element);
+                            }
+                            catch (MongoWriteException ex)
+                            {
+                                if (ex.WriteError.Category != ServerErrorCategory.DuplicateKey)
+                                {
+                                    throw;
+                                }
 
-                    await producer;
+                                dups++;
+                            }
+                        }
+                    }
+                    else {
+                        using (var queue = new BlockingCollection<UlamElement>())
+                        {
+                            // produce
+                            Task producer = Produce(k, queue);
+
+                            var options = new ParallelOptions();
+                            options.MaxDegreeOfParallelism = _clientSettings.MaxConnectionPoolSize;
+
+                            // consume
+                            Parallel.ForEach(queue.GetConsumingPartitioner(), options, element =>
+                            {
+                                element.IsPrime = IsPrime(element);
+                                cache.Add(element);
+
+                                try
+                                {
+                                    _map.InsertOne(element);
+                                }
+                                catch (MongoWriteException ex)
+                                {
+                                    if (ex.WriteError.Category != ServerErrorCategory.DuplicateKey)
+                                    {
+                                        throw;
+                                    }
+
+                                    dups++;
+                                }
+                            });
+
+                            await producer;
+                        }
+                    }
+
+                    count = await Count(localMax);
                 }
 
                 stopwatch.Stop();
@@ -134,26 +184,30 @@ namespace Ulam
                 long min = p + 1;
                 long max = (root + 2) * (root + 2);
                 var diff = max - min;
-                var toGo = _max - p;
+                //var toGo = _max - p;
                 var timeSpan = stopwatch.Elapsed.ToHumanReadableString();
                 var rate = diff / stopwatch.Elapsed.TotalSeconds;
 
-                var message = "Time Stamp          " + " | "
+                var message = "                     | "
                               + "Root".PadRight(root.ToString().Length) + " | "
                               + "Min".PadRight(min.ToString().Length) + " | "
                               + "Max".PadRight(max.ToString().Length) + " | "
                               + "Delta".PadRight(diff.ToString().Length) + " | "
-                              + "To Go".PadRight(toGo.ToString().Length) + " | "
+                              //+ "To Go".PadRight(toGo.ToString().Length) + " | "
                               + "Elapsed".PadRight(timeSpan.Length) + " | "
-                              + "Rate".PadRight(rate.ToString().Length + 3)
+                              + "Rate".PadRight(rate.ToString("F3").Length + 4) + " | "
+                              + "Tries".PadRight(tries.ToString().Length) + " | "
+                              + "Dups".PadRight(dups.ToString().Length)
                               + "\r\n" + DateTime.Now.ToString("MM/dd/yy HH:mm:ss.ff") + " | "
                               + root.ToString().PadRight(4) + " | "
                               + min.ToString().PadRight(3) + " | "
                               + max.ToString().PadRight(3) + " | "
                               + diff.ToString().PadRight(5) + " | "
-                              + toGo.ToString().PadRight(5) + " | "
+                              //+ toGo.ToString().PadRight(5) + " | "
                               + timeSpan.PadRight(7) + " | "
-                              + rate.ToString("F3").PadRight(4) + " #/s";
+                              + rate.ToString("F3").PadRight(4) + " #/s | "
+                              + tries.ToString().PadRight(5) + " | "
+                              + dups.ToString().PadRight(4);
 
                 NonBlockingConsole.WriteLine(message);
             }
@@ -200,14 +254,39 @@ namespace Ulam
             return true;
         }
 
-        private async Task<UlamElement> GetLargestNumber()
+        private async Task<long> Count(long lte = 0)
         {
+            FilterDefinition<UlamElement> filter;
+            if (lte > 0)
+            {
+                filter = new JsonFilterDefinition<UlamElement>("{ Value : { $lte : " + lte + " } }");
+            }
+            else
+            {
+                filter = FilterDefinition<UlamElement>.Empty;
+            }
+
+            return await _map.CountAsync(filter);
+        }
+
+
+        private async Task<UlamElement> GetMax(long lte = 0)
+        {
+            FilterDefinition<UlamElement> filter;
+            if (lte > 0)
+            {
+                filter = new JsonFilterDefinition<UlamElement>("{ Value : { $lte : " + lte + " } }");
+            }
+            else
+            {
+                filter = FilterDefinition<UlamElement>.Empty;
+            }
             var options = new FindOptions<UlamElement, UlamElement>
             {
                 Sort = new JsonSortDefinition<UlamElement>("{ Value : -1 }"),
                 Limit = 1
             };
-            var cursor = await _map.FindAsync(FilterDefinition<UlamElement>.Empty, options);
+            var cursor = await _map.FindAsync(filter, options);
             var largestNumber = await cursor.FirstOrDefaultAsync();
 
             return largestNumber;
