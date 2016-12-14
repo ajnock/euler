@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using EulerMath;
 
 namespace Ulam
@@ -35,40 +34,54 @@ namespace Ulam
         /// <returns></returns>
         public async Task GenerateAndSave(string file = null)
         {
+
             long initialRoot = 3;
             long minK = (long)Math.Floor((initialRoot + 1) / 2d) + 1;
             long maxK = (long)Math.Sqrt(_max) / 2;
 
-            var largestNumber = await GetMax();
-
-            if (largestNumber != null)
+            var opt = new FindOptions<UlamElement>
             {
-                long count = await Count();
-                while (count != largestNumber.Value)
+                Sort = new JsonSortDefinition<UlamElement>("{ Value : -1 }")
+            };
+            var cursor = await _map.FindAsync(JsonFilterDefinition<UlamElement>.Empty, opt);
+
+            NonBlockingConsole.WriteLine("Initializing...");
+
+            var count = await Count();
+            long last = 0;
+            bool foundTheEnd = false;
+            foreach (var largestNumber in cursor.ToEnumerable())
+            {
+                NonBlockingConsole.WriteLine("Stepping back to " + largestNumber.Value);
+
+                if (count != largestNumber.Value)
                 {
-                    var top = Math.Min(count, largestNumber.Value);
+                    if (last > 0)
+                    {
+                        var diff = largestNumber.Value - last;
+                        count -= diff;
+                    }
 
-                    NonBlockingConsole.WriteLine(DateTime.Now.ToString("MM/dd/yy HH:mm:ss.ff") + ": Stepping back to " + top);
-
-                    var t1 = GetMax(top);
-                    var t2 = Count(top);
-
-                    largestNumber = await t1;
-                    count = await t2;
+                    last = largestNumber.Value;
                 }
-
-                long root = (long)Math.Floor(Math.Sqrt(largestNumber.Value));
-
-                // make the root odd
-                if (root % 2 == 0)
+                else
                 {
-                    root--;
-                }
+                    long root = (long)Math.Floor(Math.Sqrt(largestNumber.Value));
 
-                minK = (root - 1) / 2;
+                    // make the root odd
+                    if (root % 2 == 0)
+                    {
+                        root--;
+                    }
+
+                    minK = (root - 1) / 2;
+
+                    foundTheEnd = true;
+                    break;
+                }
             }
 
-            if (largestNumber == null || largestNumber.Value <= 9)
+            if (!foundTheEnd)
             {
                 try
                 {
@@ -113,7 +126,7 @@ namespace Ulam
                 long dups = 0;
 
                 long localMax = (2 * k + 3) * (2 * k + 3);
-                var count = await Count(localMax);
+                count = await Count(localMax);
 
                 var cache = new HashSet<UlamElement>();
 
@@ -184,7 +197,6 @@ namespace Ulam
                 long min = p + 1;
                 long max = (root + 2) * (root + 2);
                 var diff = max - min;
-                //var toGo = _max - p;
                 var timeSpan = stopwatch.Elapsed.ToHumanReadableString();
                 var rate = diff / stopwatch.Elapsed.TotalSeconds;
 
@@ -203,7 +215,6 @@ namespace Ulam
                               + min.ToString().PadRight(3) + " | "
                               + max.ToString().PadRight(3) + " | "
                               + diff.ToString().PadRight(5) + " | "
-                              //+ toGo.ToString().PadRight(5) + " | "
                               + timeSpan.PadRight(7) + " | "
                               + rate.ToString("F3").PadRight(4) + " #/s | "
                               + tries.ToString().PadRight(5) + " | "
