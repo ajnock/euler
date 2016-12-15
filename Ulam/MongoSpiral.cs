@@ -52,9 +52,9 @@ namespace Ulam
             bool foundTheEnd = false;
             foreach (var largestNumber in cursor.ToEnumerable())
             {
-                NonBlockingConsole.WriteLine("Stepping back to " + largestNumber.Value);
+                NonBlockingConsole.WriteLine("Stepping back to " + largestNumber.Value + " because count is " + count);
 
-                if (count != largestNumber.Value)
+                if (count < largestNumber.Value)
                 {
                     if (last > 0)
                     {
