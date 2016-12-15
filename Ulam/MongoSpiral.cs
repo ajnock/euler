@@ -59,7 +59,7 @@ namespace Ulam
                 {
                     if (last > 0)
                     {
-                        var diff = largestNumber.Value - last;
+                        var diff = last - largestNumber.Value;
                         count -= diff;
                     }
 
