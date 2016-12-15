@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using EulerMath;
+using MongoDB.Bson;
 
 namespace Ulam
 {
@@ -122,7 +123,7 @@ namespace Ulam
                 var stopwatch = new Stopwatch();
                 stopwatch.Start();
 
-                long tries = 0;
+                long failures = 0;
                 long dups = 0;
 
                 long localMax = (2 * k + 3) * (2 * k + 3);
@@ -132,9 +133,7 @@ namespace Ulam
 
                 while (count < localMax)
                 {
-                    tries++;
-
-                    if (tries > 1)
+                    if (failures > 1)
                     {
                         foreach (var element in cache)
                         {
@@ -151,6 +150,13 @@ namespace Ulam
 
                                 dups++;
                             }
+                            catch (Exception ex)
+                            {
+                                //NonBlockingConsole.WriteLine(element.ToJson());
+                                //NonBlockingConsole.WriteLine(ex);
+
+                                failures++;
+                            }
                         }
                     }
                     else {
@@ -165,21 +171,31 @@ namespace Ulam
                             // consume
                             Parallel.ForEach(queue.GetConsumingPartitioner(), options, element =>
                             {
-                                element.IsPrime = IsPrime(element);
-                                cache.Add(element);
-
                                 try
                                 {
-                                    _map.InsertOne(element);
-                                }
-                                catch (MongoWriteException ex)
-                                {
-                                    if (ex.WriteError.Category != ServerErrorCategory.DuplicateKey)
-                                    {
-                                        throw;
-                                    }
+                                    element.IsPrime = IsPrime(element);
+                                    cache.Add(element);
 
-                                    dups++;
+                                    try
+                                    {
+                                        _map.InsertOne(element);
+                                    }
+                                    catch (MongoWriteException ex)
+                                    {
+                                        if (ex.WriteError.Category != ServerErrorCategory.DuplicateKey)
+                                        {
+                                            throw;
+                                        }
+
+                                        dups++;
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    //NonBlockingConsole.WriteLine(element.ToJson());
+                                    //NonBlockingConsole.WriteLine(ex);
+
+                                    failures++;
                                 }
                             });
 
@@ -208,7 +224,7 @@ namespace Ulam
                               //+ "To Go".PadRight(toGo.ToString().Length) + " | "
                               + "Elapsed".PadRight(timeSpan.Length) + " | "
                               + "Rate".PadRight(rate.ToString("F3").Length + 4) + " | "
-                              + "Tries".PadRight(tries.ToString().Length) + " | "
+                              + "Fails".PadRight(failures.ToString().Length) + " | "
                               + "Dups".PadRight(dups.ToString().Length)
                               + "\r\n" + DateTime.Now.ToString("MM/dd/yy HH:mm:ss.ff") + " | "
                               + root.ToString().PadRight(4) + " | "
@@ -217,7 +233,7 @@ namespace Ulam
                               + diff.ToString().PadRight(5) + " | "
                               + timeSpan.PadRight(7) + " | "
                               + rate.ToString("F3").PadRight(4) + " #/s | "
-                              + tries.ToString().PadRight(5) + " | "
+                              + failures.ToString().PadRight(5) + " | "
                               + dups.ToString().PadRight(4);
 
                 NonBlockingConsole.WriteLine(message);
