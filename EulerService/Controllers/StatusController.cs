@@ -33,7 +33,7 @@ namespace EulerService.Controllers
                 TotalCount = await totalCount,
                 Newest = await newest,
                 LargestPrime = await largestPrime,
-                LargestNumber = await  largestNumber
+                LargestNumber = await largestNumber
             };
 
             return Json(content, SerializerSettings);
@@ -53,6 +53,11 @@ namespace EulerService.Controllers
         public async Task<IHttpActionResult> Index(long id)
         {
             var content = await _repo.Find(id);
+
+            if (content == null)
+            {
+                return NotFound();
+            }
 
             return Json(content, SerializerSettings);
         }
