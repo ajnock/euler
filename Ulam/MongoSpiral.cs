@@ -133,6 +133,7 @@ namespace Ulam
 
                 while (count < localMax)
                 {
+                    NonBlockingConsole.WriteLine();
                     if (failures > 1)
                     {
                         foreach (var element in cache)
