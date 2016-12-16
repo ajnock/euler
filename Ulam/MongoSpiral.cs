@@ -35,23 +35,26 @@ namespace Ulam
         /// <returns></returns>
         public async Task GenerateAndSave(string file = null)
         {
-
             long initialRoot = 3;
             long minK = (long)Math.Floor((initialRoot + 1) / 2d) + 1;
             long maxK = (long)Math.Sqrt(_max) / 2;
+
+            NonBlockingConsole.WriteLine("Initializing...");
+
+            var countTask = Count();
 
             var opt = new FindOptions<UlamElement>
             {
                 Sort = new JsonSortDefinition<UlamElement>("{ Value : -1 }")
             };
-            var cursor = await _map.FindAsync(JsonFilterDefinition<UlamElement>.Empty, opt);
+            var cursor = _map.FindAsync(JsonFilterDefinition<UlamElement>.Empty, opt);
 
-            NonBlockingConsole.WriteLine("Initializing...");
+            await Task.WhenAll(cursor, countTask);
 
-            var count = await Count();
+            var count = countTask.Result;
             long last = 0;
             bool foundTheEnd = false;
-            foreach (var largestNumber in cursor.ToEnumerable())
+            foreach (var largestNumber in cursor.Result.ToEnumerable())
             {
                 NonBlockingConsole.WriteLine("Stepping back to " + largestNumber.Value + " because count is " + count);
 
