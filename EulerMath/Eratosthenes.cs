@@ -53,6 +53,11 @@ namespace Euler
             }
         }
 
+        /// <summary>
+        /// Multithreaded hydra approach
+        /// </summary>
+        /// <param name="max"></param>
+        /// <returns></returns>
         public IEnumerable<long> Sieve2(long max = long.MaxValue)
         {
             var heads = new List<Head>();
@@ -66,11 +71,12 @@ namespace Euler
                 pointer++;
                 _maxSieved = pointer;
 
-                if (!heads.Any(p => p.Prime == pointer))
+                if (heads.All(p => p.Prime != pointer))
                 {
                     heads.Add(new Head(pointer));
                     yield return pointer;
                 }
+
                 foreach (var head in heads)
                 {
                     if (head.Prime <= pointer)
@@ -220,6 +226,12 @@ namespace Euler
             }
         }
 
+        /// <summary>
+        /// Uses a file to pickup where we left off
+        /// </summary>
+        /// <param name="max"></param>
+        /// <param name="file"></param>
+        /// <returns></returns>
         public IEnumerable<long> CachedSieve(long max = long.MaxValue, string file = @"D:\primes100000000.txt")
         {
             long l = 0;

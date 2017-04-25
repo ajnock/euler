@@ -22,7 +22,9 @@ namespace Euler
             { 28, new Promblem28() },
             { 154, new Problem154() },
             { 0, new SequentialPrimeRatio() },
-            { 104, new Problem104() }
+            { 104, new Problem104() },
+            { 59, new Problem59() },
+            { 182, new Problem182() },
         };
         static int Main(string[] args)
         {
@@ -72,6 +74,7 @@ namespace Euler
                 NonBlockingConsole.Flush();
             }
 
+            Console.WriteLine();
             Console.WriteLine("Solved " + problem.GetType().Name + " " + DateTime.Now);
             Console.WriteLine();
             Console.WriteLine("=========================================");

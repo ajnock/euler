@@ -54,6 +54,8 @@
     <Compile Include="Problem118.cs" />
     <Compile Include="Problem134.cs" />
     <Compile Include="Problem154.cs" />
+    <Compile Include="Problem182.cs" />
+    <Compile Include="Problem59.cs" />
     <Compile Include="Promblem28.cs" />
     <Compile Include="Problem41.cs" />
     <Compile Include="Problem49.cs" />
@@ -68,6 +70,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="p059_cipher.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="p096_sudoku.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

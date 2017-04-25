@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 using EulerMath;
 using MongoDB.Bson;
 
@@ -47,43 +48,53 @@ namespace Ulam
             {
                 Sort = new JsonSortDefinition<UlamElement>("{ Value : -1 }")
             };
-            var cursor = _map.FindAsync(JsonFilterDefinition<UlamElement>.Empty, opt);
+            var findTask = _map.FindAsync(JsonFilterDefinition<UlamElement>.Empty, opt);
 
-            await Task.WhenAll(cursor, countTask);
 
-            var count = countTask.Result;
             long last = 0;
             bool foundTheEnd = false;
-            foreach (var largestNumber in cursor.Result.ToEnumerable())
-            {
-                NonBlockingConsole.WriteLine("Stepping back to " + largestNumber.Value + " because count is " + count);
+            var count = await countTask;
 
-                if (count < largestNumber.Value)
-                {
-                    if (last > 0)
-                    {
-                        var diff = last - largestNumber.Value;
-                        count -= diff;
-                    }
+            var cursor = await findTask;
 
-                    last = largestNumber.Value;
-                }
-                else
-                {
-                    long root = (long)Math.Floor(Math.Sqrt(largestNumber.Value));
+            var source = new CancellationTokenSource();
+            await cursor.ForEachAsync((largestNumber, task) =>
+             {
+                 try
+                 {
+                     NonBlockingConsole.WriteLine("Stepping back to " + largestNumber.Value + " because count is " +
+                                                  count);
 
-                    // make the root odd
-                    if (root % 2 == 0)
-                    {
-                        root--;
-                    }
+                     if (count < largestNumber.Value)
+                     {
+                         if (last > 0)
+                         {
+                             var diff = last - largestNumber.Value;
+                             count -= diff;
+                         }
 
-                    minK = (root - 1) / 2;
+                         last = largestNumber.Value;
+                     }
+                     else
+                     {
+                         long root = (long)Math.Floor(Math.Sqrt(largestNumber.Value));
 
-                    foundTheEnd = true;
-                    break;
-                }
-            }
+                         // make the root odd
+                         if (root % 2 == 0)
+                         {
+                             root--;
+                         }
+
+                         minK = (root - 1) / 2;
+
+                         foundTheEnd = true;
+                         source.Cancel();
+                     }
+                 }
+                 catch (TaskCanceledException ex)
+                 {
+                 }
+             }, source.Token);
 
             if (!foundTheEnd)
             {
